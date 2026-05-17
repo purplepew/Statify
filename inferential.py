@@ -4,6 +4,7 @@ import statistics
 
 import pyglet
 import os
+from config import DEFAULT_GROUPS
 
 pyglet.font.add_file(os.path.abspath("Safira-March.ttf"))
 
@@ -32,7 +33,7 @@ class Inferential(tk.Toplevel):
         # ---------------- GRID DATA ----------------
         self.entries = []
         self.total_rows = 5
-        self.total_cols = 3
+        self.total_cols = DEFAULT_GROUPS
 
         # ---------------- NAVIGATION ----------------
         nav_frame = tk.Frame(self, bg="#6c0987", height=60)
