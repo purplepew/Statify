@@ -160,6 +160,34 @@ def bar_graph(*groups):
     figure.tight_layout()
     return figure
 
+def scatter_plot(*groups):
+    prepared_groups = []
+    for group in groups[:2]:  # Only take the first two groups for scatter plot
+        values = []
+        for value in group:
+            try:
+                values.append(float(value))
+            except (TypeError, ValueError):
+                pass
+        if values:
+            prepared_groups.append(values)
+
+    if len(prepared_groups) < 2:
+        messagebox.showwarning("Scatter Plot", "At least two groups with valid numeric data are required for a scatter plot.")
+        return None
+
+    figure = Figure(figsize=(8, 8), dpi=100)
+    axis = figure.add_subplot(111)
+
+    axis.scatter(prepared_groups[0], prepared_groups[1], color="#6c0987", alpha=0.7, edgecolor="white", s=80)
+    
+    axis.set_xlabel("Group 1", fontsize=8, fontweight="bold")
+    axis.set_ylabel("Group 2", fontsize=8, fontweight="bold")
+    axis.set_title("Scatter Plot of Groups", fontsize=14, fontweight="bold")
+    #axis.legend(fontsize=11)
+    axis.grid(alpha=0.3, linestyle="--")
+    figure.tight_layout()
+    return figure
 
 class VisualizationWindow(tk.Toplevel):
     def __init__(self, parent):
@@ -279,6 +307,64 @@ class VisualizationWindow(tk.Toplevel):
 
     def show_bar_graph(self):
         self.display_figure(bar_graph(*[group["values"] for group in self.source_window.get_all_data()]))
+
+    def show_scatter_plot(self):
+        self.display_figure(scatter_plot(*[group["values"] for group in self.source_window.get_all_data()]))
+
+    def display_figure(self, figure):
+        if figure is None:
+            return
+
+        for child in self.chart_frame.winfo_children():
+            child.destroy()
+
+        self.chart_figure = figure
+        self.chart_canvas = FigureCanvasTkAgg(self.chart_figure, master=self.chart_frame)
+        self.chart_canvas.draw()
+        self.chart_canvas.get_tk_widget().pack(fill="both", expand=True)
+
+
+class VisualizationScatterPlotExclusive(tk.Toplevel):
+    '''A simplified visualization window that only shows the scatter plot,
+    without the option to switch between different visualizations.
+    This is used specifically for the "Show Scatter Plot" button in the inferential statistics results window.'''
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.source_window = parent
+        self.title("Visualization (Scatter Plot Only)")
+
+        window_width = 900
+        window_height = 650
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = int((screen_width / 2) - (window_width / 2))
+        y = int((screen_height / 2) - (window_height / 2))
+        self.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        self.configure(bg="#d871f5")
+
+        header_frame = tk.Frame(self, bg="#6c0987", height=60)
+        header_frame.pack(side="top", fill="x")
+        header_frame.pack_propagate(False)
+
+        tk.Label(
+            header_frame,
+            text="Correlation Scatter Plot",
+            font=("Georgia", 14, "bold"),
+            fg="white",
+            bg="#6c0987"
+        ).pack(side="left", padx=20)
+
+        content_frame = tk.Frame(self, bg="#d871f5")
+        content_frame.pack(fill="x", expand=True)
+
+        self.chart_frame = tk.Frame(content_frame, bg="white", highlightbackground="gray80", highlightthickness=1)
+        self.chart_frame.pack(side="top", fill="x", expand=True, padx=20, pady=(20, 10))
+
+        self.show_scatter_plot()
+
+    def show_scatter_plot(self):
+        self.display_figure(scatter_plot(*[group["values"] for group in self.source_window.get_all_data()][:2]))
 
     def display_figure(self, figure):
         if figure is None:
