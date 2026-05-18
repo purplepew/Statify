@@ -456,6 +456,19 @@ class Inferential(tk.Toplevel):
         r_denominator = ((n * sum_xsquared - (sum_x ** 2)) * (n * sum_ysquared - (sum_y ** 2))) ** 0.5
         r = r_numerator / r_denominator if r_denominator != 0 else 0
 
+        t_value = (r * (n - 2) ** 0.5) / ((1 - r ** 2) ** 0.5) if n > 2 and r ** 2 != 1 else 0
+
+        # Get alpha or Level of Significance taken from User Input, default to 0.05 if invalid
+        alpha = 0.05
+        try:
+            alpha = (100 - float(self.significance.get())) / 100
+        except:
+            pass
+
+        t_crit = self.__t_critical_value(n - 2, alpha)
+
+        p_value = self.__p_value_from_t(t_value, n - 2)
+
         self.correlation_result = {
             "data": data,
             "x_values": x_values,
@@ -468,7 +481,10 @@ class Inferential(tk.Toplevel):
             "sum_xsquared": sum_xsquared,
             "sum_ysquared": sum_ysquared,
             "sum_xy": sum_xy,
-            "r": r
+            "r": r,
+            "t_value": t_value,
+            "t_crit": t_crit,
+            "p_value": p_value
         }
         self.open_extracted_correlation_data_page()
 
@@ -580,6 +596,31 @@ class Inferential(tk.Toplevel):
                     "significant": significant
                 })
         return comparisons
+    
+    def __t_critical_value(self, df, alpha):
+        try:
+            from scipy.stats import t
+            return t.ppf(1 - alpha/2, df)
+        except ImportError:
+            t_table = {
+                1: {0.05: 12.706, 0.01: 63.657},
+                2: {0.05: 4.303, 0.01: 9.925},
+                3: {0.05: 3.182, 0.01: 5.841},
+                4: {0.05: 2.776, 0.01: 4.604},
+                5: {0.05: 2.571, 0.01: 4.032},
+                10: {0.05: 2.228, 0.01: 3.169},
+                20: {0.05: 2.086, 0.01: 2.845},
+                30: {0.05: 2.042, 0.01: 2.750},
+            }
+            return t_table.get(df, {}).get(alpha, None)
+        
+    def __p_value_from_t(self, t_value, df):
+        try:
+            from scipy.stats import t
+            p_value = (1 - t.cdf(abs(t_value), df)) * 2
+            return p_value
+        except ImportError:
+            return None
 
     # =========================================================
     # RESULT WINDOW
@@ -678,13 +719,9 @@ class Inferential(tk.Toplevel):
             tk.Label(comparison_frame_inner, text="No pairwise comparisons available.", bg="white").pack(anchor="w", pady=4)
 
     def open_extracted_correlation_data_page(self):
-
         win = tk.Toplevel(self)
-
         win.title("Inferential Results (Correlation)")
-
-        win.geometry("700x500")
-
+        win.geometry("700x550")
         win.configure(bg="white")
 
         tk.Label(
@@ -760,6 +797,26 @@ class Inferential(tk.Toplevel):
             fg="#6c0987",
             font=("Georgia", 16, "bold")
         ).pack(pady=10)
+
+        # Compare t-value with critical t-value to determine significance
+        significance_text = "Reject H₀" if abs(results['t_value']) > results['t_crit'] else "Fail to Reject H₀"
+        tk.Label(
+            result_frame,
+            text=f"t-value: {results['t_value']:.2f} | Critical t-value: {results['t_crit']:.2f} → {significance_text}",
+            bg="white",
+            font=("Georgia", 12, "italic")
+        ).pack(pady=(5,0))
+
+        # Compare p-value with alpha to determine significance
+        alpha = self.significance.get()
+        alpha_val = 1 - (float(alpha) / 100)
+        p_significance_text = "Reject H₀" if results['p_value'] < alpha_val else "Fail to Reject H₀"
+        tk.Label(
+            result_frame,
+            text=f"p-value: {results['p_value']:.4f} | α: {(100-float(alpha))/100.0} → {p_significance_text}",
+            bg="white",
+            font=("Georgia", 12, "italic")
+        ).pack(pady=(0,5))
 
         # Button at footer to display the scatter plot of the data points
         tk.Button(
