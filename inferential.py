@@ -185,7 +185,10 @@ class Inferential(tk.Toplevel):
 
         self.parent = parent
 
-        self.protocol("WM_DELETE_WINDOW", self.destroy)
+        def on_close():
+            root.destroy()
+
+        self.protocol("WM_DELETE_WINDOW", on_close)
 
     # =========================================================
     # GRID
@@ -332,6 +335,9 @@ class Inferential(tk.Toplevel):
     # =========================================================
 
     def get_all_data(self):
+        return [{"group":1, "values":['70', '75', '80']},
+                {"group":2, "values":['85', '88', '90']},
+                {"group":3, "values":['60', '65', '70']}] # Preset for ANOVA
 
         all_data = []
 
@@ -340,7 +346,8 @@ class Inferential(tk.Toplevel):
             values = []
 
             for row in range(self.total_rows):
-                values.append(self.entries[row][col].get())
+                if self.entries[row][col].get() != "":
+                    values.append(self.entries[row][col].get())
 
             all_data.append({
                 "group": col + 1,
@@ -354,28 +361,18 @@ class Inferential(tk.Toplevel):
     # =========================================================
 
     def anova_analysis(self):
-
         data = self.get_all_data()
+        print(data)
 
+        # ANOVA F Test calculations
         group_means = self.__compute_group_means(data)
-
         grand_mean = self.__compute_grand_mean(data)
+        ss_between = self.__compute_ss_between(data, group_means, grand_mean)
+        ss_within = self.__compute_ss_within(data, group_means)
 
-        ss_between = self.__compute_ss_between(
-            data,
-            group_means,
-            grand_mean
-        )
-
-        ss_within = self.__compute_ss_within(
-            data,
-            group_means
-        )
-
+        # Groups and Observations, including degrees of freedom
         k = len(data)
-
         N = sum(len(group["values"]) for group in data)
-
         df_between = k - 1
         df_within = N - k
 
@@ -384,23 +381,37 @@ class Inferential(tk.Toplevel):
 
         F_value = MS_between / MS_within if MS_within > 0 else 0
 
+        # Get alpha or Level of Significance taken from User Input, default to 0.05 if invalid
         alpha = 0.05
-
         try:
             alpha = (100 - float(self.significance.get())) / 100
         except:
             pass
 
-        crit_F = self.__f_critical_value(
-            df_between,
-            df_within,
-            alpha
-        )
+        crit_F = self.__f_critical_value(df_between, df_within, alpha)
+
+        q_value = self.__q_value(k, df_within, alpha)
+        HSD = q_value * (MS_within/k) ** 0.5 if q_value is not None and MS_within > 0 else None
+
+        compare_group = self.__compare_groups(data, group_means, HSD)
 
         self.anova_results = {
+            "data": data,
+            "group_means": group_means,
+            "grand_mean": grand_mean,
+            "ss_between": ss_between,
+            "ss_within": ss_within,
+            "df_between": df_between,
+            "df_within": df_within,
+            "MS_between": MS_between,
+            "MS_within": MS_within,
             "F_value": F_value,
             "crit_F": crit_F,
-            "significant": crit_F is not None and F_value > crit_F
+            "alpha": alpha,
+            "q_value": q_value,
+            "HSD": HSD,
+            "compare_group": compare_group,
+            "significant": crit_F is not None and F_value > crit_F,
         }
 
         self.open_extracted_anova_data_page()
@@ -410,109 +421,109 @@ class Inferential(tk.Toplevel):
     # =========================================================
 
     def __compute_group_means(self, data):
-
+        # Compute mean for each group
         group_means = []
-
         for group in data:
-
             nums = []
-
             for v in group["values"]:
-
                 try:
                     nums.append(float(v))
                 except:
                     pass
-
-            mean = statistics.mean(nums) if nums else 0
-
+            if len(nums) > 0:
+                mean = statistics.mean(nums)
+            else:
+                mean = 0
             group_means.append(mean)
-
         return group_means
-
+    
     def __compute_grand_mean(self, data):
-
+        # Compute mean of all values across all groups
         all_nums = []
-
         for group in data:
-
             for v in group["values"]:
-
                 try:
                     all_nums.append(float(v))
                 except:
                     pass
-
-        return statistics.mean(all_nums) if all_nums else 0
-
-    def __compute_ss_between(
-        self,
-        data,
-        group_means,
-        grand_mean
-    ):
-
+        if len(all_nums) > 0:
+            grand_mean = statistics.mean(all_nums)
+        else:
+            grand_mean = 0
+        return grand_mean
+    
+    def __compute_ss_between(self, data, group_means, grand_mean):
+        # Compute summation of squares between groups
         ss_between = 0
-
         for i, group in enumerate(data):
-
             nums = []
-
             for v in group["values"]:
-
                 try:
                     nums.append(float(v))
                 except:
                     pass
-
             n = len(nums)
-
             ss_between += n * (group_means[i] - grand_mean) ** 2
-
         return ss_between
-
-    def __compute_ss_within(
-        self,
-        data,
-        group_means
-    ):
-
+    
+    def __compute_ss_within(self, data, group_means):
+        # Compute summation of squares within groups
         ss_within = 0
-
         for i, group in enumerate(data):
-
             nums = []
-
             for v in group["values"]:
-
                 try:
                     nums.append(float(v))
                 except:
                     pass
-
             for num in nums:
                 ss_within += (num - group_means[i]) ** 2
-
         return ss_within
-
-    def __f_critical_value(
-        self,
-        df_between,
-        df_within,
-        alpha
-    ):
-
+    
+    def __f_critical_value(self, df_between, df_within, alpha):
+        # Return the critical F value for given degrees of freedom and alpha.
         try:
             from scipy.stats import f
-
-            return f.ppf(
-                1 - alpha,
-                df_between,
-                df_within
-            )
-
+            return f.ppf(1 - alpha, df_between, df_within)
         except ImportError:
-            return None
+            f_table = {
+                (1, 10): {0.05: 4.9646, 0.01: 10.042},
+                (2, 10): {0.05: 3.2253, 0.01: 5.7246},
+                (3, 10): {0.05: 2.9787, 0.01: 5.0257},
+                (1, 20): {0.05: 4.3515, 0.01: 7.4333},
+                (2, 20): {0.05: 3.0863, 0.01: 4.8508},
+                (3, 20): {0.05: 2.8669, 0.01: 4.3989},
+            }
+            return f_table.get((df_between, df_within), {}).get(alpha, None)
+        
+    def __q_value(self, k, df_within, alpha):
+        try:
+            from scipy.stats import studentized_range
+            return studentized_range.ppf(1 - alpha, k, df_within)
+        except ImportError:
+            q_table = {
+                (3, 10): {0.05: 3.77, 0.01: 5.34},
+                (4, 10): {0.05: 4.34, 0.01: 6.16},
+                (5, 10): {0.05: 4.94, 0.01: 7.01},
+                (3, 20): {0.05: 3.46, 0.01: 4.96},
+                (4, 20): {0.05: 3.96, 0.01: 5.68},
+                (5, 20): {0.05: 4.53, 0.01: 6.46},
+            }
+            return q_table.get((k, df_within), {}).get(alpha, None)
+        
+    def __compare_groups(self, data, group_means, HSD):
+        comparisons = []
+        for i in range(len(data)):
+            for j in range(i + 1, len(data)):
+                mean_diff = abs(group_means[i] - group_means[j])
+                significant = HSD is not None and mean_diff > HSD
+                comparisons.append({
+                    "group1": data[i]["group"],
+                    "group2": data[j]["group"],
+                    "mean_diff": mean_diff,
+                    "significant": significant
+                })
+        return comparisons
 
     # =========================================================
     # RESULT WINDOW
@@ -524,14 +535,14 @@ class Inferential(tk.Toplevel):
 
         win.title("Inferential Results (ANOVA)")
 
-        win.geometry("700x400")
+        win.geometry("700x500")
 
         win.configure(bg="white")
 
         tk.Label(
             win,
             text="ANOVA Results",
-            font=("Georgia", 24, "bold"),
+            font=("Safira March Personal Use Only", 24, "bold"),
             bg="#6c0987",
             fg="white",
             pady=15
@@ -575,7 +586,41 @@ class Inferential(tk.Toplevel):
             bg="white",
             fg="#6c0987",
             font=("Georgia", 16, "bold")
-        ).pack(pady=20)
+        ).pack(pady=10)
+
+        result_frame2 = tk.Frame(win, bg="white")
+        result_frame2.pack(fill="x", expand=True)
+
+        tk.Label(
+            result_frame2,
+            text="Tukey Pairwise Comparisons",
+            font=("Safira March Personal Use Only", 24, "bold"),
+            bg="#6c0987",
+            fg="white",
+            pady=15
+        ).pack(fill="x")
+
+        comparison_frame_inner = tk.Frame(result_frame2, bg="white")
+        comparison_frame_inner.pack(fill="both", expand=True, padx=20, pady=(0, 10))
+
+        tk.Label(comparison_frame_inner, text=f"HSD threshold: {results['HSD']:.2f}", bg="white", font=("Georgia", 12, "italic")).pack(anchor="w", pady=(8, 4))
+        tk.Label(comparison_frame_inner, text="Mean difference vs HSD", bg="white", font=("Georgia", 12, "bold")).pack(anchor="w", pady=(8, 4))
+
+        if results['compare_group']:
+            for comp in results['compare_group']:
+                sign_text = "Significant" if comp['significant'] else "Not Significant"
+                text_color = "#6c0987" if comp['significant'] else "black"
+                tk.Label(
+                    comparison_frame_inner,
+                    text=f"Group {comp['group1']} vs Group {comp['group2']}: Δ={comp['mean_diff']:.2f}, HSD={results['HSD']:.2f} → {sign_text}",
+                    bg="white",
+                    fg=text_color,
+                    wraplength=380,
+                    justify="left"
+                ).pack(anchor="w", pady=2)
+        else:
+            tk.Label(comparison_frame_inner, text="No pairwise comparisons available.", bg="white").pack(anchor="w", pady=4)
+
 
 
 if __name__ == "__main__":
