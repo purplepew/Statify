@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import statistics
+import visualization
 
 import pyglet
 import os
@@ -183,6 +184,18 @@ class Inferential(tk.Toplevel):
             relief="flat"
         ).pack(side="left", padx=5)
 
+        tk.Button(
+            control_frame,
+            text="Extract Data (Correlation)",
+            command=self.correlation_analysis,
+            fg="white",
+            bg="#6c0987",
+            font=("Verdana", 10, "bold"),
+            padx=10,
+            pady=8,
+            relief="flat"
+        ).pack(side="left", padx=5)
+
         self.parent = parent
 
         def on_close():
@@ -335,9 +348,12 @@ class Inferential(tk.Toplevel):
     # =========================================================
 
     def get_all_data(self):
-        return [{"group":1, "values":['70', '75', '80']},
+        '''return [{"group":1, "values":['70', '75', '80']},
                 {"group":2, "values":['85', '88', '90']},
-                {"group":3, "values":['60', '65', '70']}] # Preset for ANOVA
+                {"group":3, "values":['60', '65', '70']}]''' # Preset for ANOVA
+        
+        return [{"group":1, "values":['1', '2', '3', '4', '5']},
+                {"group":2, "values":['50', '55', '65', '70', '80']}] # Preset for Pearson Correlation
 
         all_data = []
 
@@ -415,6 +431,46 @@ class Inferential(tk.Toplevel):
         }
 
         self.open_extracted_anova_data_page()
+
+    # =========================================================
+    # CORRELATION (PEARSON)
+    # =========================================================
+
+    def correlation_analysis(self):
+        data = self.get_all_data()
+
+        x_values = list(map(float, data[0]["values"]))
+        y_values = list(map(float, data[1]["values"]))
+        xsquared = list(map(lambda x: x**2, x_values))
+        ysquared = list(map(lambda y: y**2, y_values))
+        xy = list(map(lambda x, y: x * y, x_values, y_values))
+
+        sum_x = sum(x_values)
+        sum_y = sum(y_values)
+        sum_xsquared = sum(xsquared)
+        sum_ysquared = sum(ysquared)
+        sum_xy = sum(xy)
+        n = len(x_values)
+
+        r_numerator = n * sum_xy - (sum_x * sum_y)
+        r_denominator = ((n * sum_xsquared - (sum_x ** 2)) * (n * sum_ysquared - (sum_y ** 2))) ** 0.5
+        r = r_numerator / r_denominator if r_denominator != 0 else 0
+
+        self.correlation_result = {
+            "data": data,
+            "x_values": x_values,
+            "y_values": y_values,
+            "xsquared": xsquared,
+            "ysquared": ysquared,
+            "xy": xy,
+            "sum_x": sum_x,
+            "sum_y": sum_y,
+            "sum_xsquared": sum_xsquared,
+            "sum_ysquared": sum_ysquared,
+            "sum_xy": sum_xy,
+            "r": r
+        }
+        self.open_extracted_correlation_data_page()
 
     # =========================================================
     # COMPUTATIONS
@@ -621,6 +677,102 @@ class Inferential(tk.Toplevel):
         else:
             tk.Label(comparison_frame_inner, text="No pairwise comparisons available.", bg="white").pack(anchor="w", pady=4)
 
+    def open_extracted_correlation_data_page(self):
+
+        win = tk.Toplevel(self)
+
+        win.title("Inferential Results (Correlation)")
+
+        win.geometry("700x500")
+
+        win.configure(bg="white")
+
+        tk.Label(
+            win,
+            text="Correlation Results",
+            font=("Safira March Personal Use Only", 24, "bold"),
+            bg="#6c0987",
+            fg="white",
+            pady=8
+        ).pack(fill="x", pady=(0, 10))
+
+        results = self.correlation_result
+
+        result_frame = tk.Frame(win, bg="white")
+
+        result_frame.pack(fill="x", expand=False, pady=5)
+
+        # Table of values including summations and correlation coefficient
+        table_frame = tk.Frame(result_frame, bg="white")
+        table_frame.pack(pady=(0, 10))
+        headers = ["X", "Y", "X²", "Y²", "XY"]
+        for col, header in enumerate(headers):
+            tk.Label(table_frame, text=header, bg="#6c0987", fg="white", font=("Verdana", 10, "bold"), width=12).grid(row=0, column=col, padx=1, pady=1)        
+        for i in range(len(results['x_values'])):
+            tk.Label(table_frame, text=f"{results['x_values'][i]:.2f}", bg="white", font=("Georgia", 12)).grid(row=i+1, column=0, padx=1, pady=1)
+            tk.Label(table_frame, text=f"{results['y_values'][i]:.2f}", bg="white", font=("Georgia", 12)).grid(row=i+1, column=1, padx=1, pady=1)
+            tk.Label(table_frame, text=f"{results['xsquared'][i]:.2f}", bg="white", font=("Georgia", 12)).grid(row=i+1, column=2, padx=1, pady=1)
+            tk.Label(table_frame, text=f"{results['ysquared'][i]:.2f}", bg="white", font=("Georgia", 12)).grid(row=i+1, column=3, padx=1, pady=1)
+            tk.Label(table_frame, text=f"{results['xy'][i]:.2f}", bg="white", font=("Georgia", 12)).grid(row=i+1, column=4, padx=1, pady=1)
+        
+        tk.Label(table_frame, text="─" * 50, bg="white").grid(row=len(results['x_values']) + 1, column=0, columnspan=5, pady=(4, 4))
+        tk.Label(table_frame, text=f"ΣX: {results['sum_x']:.2f}", bg="white", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=0, padx=1, pady=1)
+        tk.Label(table_frame, text=f"ΣY: {results['sum_y']:.2f}", bg="white", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=1, padx=1, pady=1)
+        tk.Label(table_frame, text=f"ΣX²: {results['sum_xsquared']:.2f}", bg="white", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=2, padx=1, pady=1)
+        tk.Label(table_frame, text=f"ΣY²: {results['sum_ysquared']:.2f}", bg="white", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=3, padx=1, pady=1)
+        tk.Label(table_frame, text=f"ΣXY: {results['sum_xy']:.2f}", bg="white", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=4, padx=1, pady=1)
+
+        tk.Label(
+            result_frame,
+            text=f"Correlation Coefficient: {results['r']:.2f}",
+            bg="white",
+            font=("Georgia", 14)
+        ).pack(pady=10)
+
+        interpretation = "None" # Default interpretation
+        if results['r'] < 0:
+            if results['r'] > -0.3:
+                interpretation = "Weak Negative Correlation"
+            elif results['r'] > -0.5:
+                interpretation = "Low Negative Correlation"
+            elif results['r'] > -0.7:
+                interpretation = "Moderate Negative Correlation"
+            elif results['r'] > -0.9:
+                interpretation = "High Negative Correlation"
+            else:
+                interpretation = "Very High Negative Correlation"
+        else:
+            if results['r'] < 0.3:
+                interpretation = "Weak Positive Correlation"
+            elif results['r'] < 0.5:
+                interpretation = "Low Positive Correlation"
+            elif results['r'] < 0.7:
+                interpretation = "Moderate Positive Correlation"
+            elif results['r'] < 0.9:
+                interpretation = "High Positive Correlation"
+            else:
+                interpretation = "Very High Positive Correlation"
+
+        tk.Label(
+            result_frame,
+            text=f"Interpretation: {interpretation}",
+            bg="white",
+            fg="#6c0987",
+            font=("Georgia", 16, "bold")
+        ).pack(pady=10)
+
+        # Button at footer to display the scatter plot of the data points
+        tk.Button(
+            result_frame,
+            text="Show Scatter Plot",
+            command=lambda: visualization.VisualizationScatterPlotExclusive(self),
+            bg="#6c0987",
+            fg="white",
+            font=("Verdana", 10, "bold"),
+            padx=12,
+            pady=8,
+            relief="flat"
+        ).pack(pady=(20, 0))
 
 
 if __name__ == "__main__":
