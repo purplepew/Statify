@@ -599,7 +599,7 @@ class Inferential(tk.Toplevel):
             fg="white",
             pady=15
         ).pack(fill="x")
-        #
+        
         comparison_frame_inner = tk.Frame(result_frame2, bg="white")
         comparison_frame_inner.pack(fill="both", expand=True, padx=20, pady=(0, 10))
 
