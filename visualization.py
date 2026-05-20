@@ -7,6 +7,7 @@ import seaborn as sns
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
+import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
 
@@ -189,6 +190,144 @@ def scatter_plot(*groups):
     figure.tight_layout()
     return figure
 
+
+def _prepare_groups(*groups):
+    prepared = []
+    for group in groups:
+        values = []
+        for value in group:
+            try:
+                values.append(float(value))
+            except (TypeError, ValueError):
+                pass
+        if values:
+            prepared.append(values)
+    return prepared
+
+
+def central_tendency_figure(*groups):
+    plt.close('all')
+    prepared = _prepare_groups(*groups)
+    if not prepared:
+        messagebox.showwarning("Central Tendency", "No valid numeric data found.")
+        return None
+
+    # Build metrics DataFrame
+    rows = []
+    for i, vals in enumerate(prepared, start=1):
+        s = pd.Series(vals)
+        mode_val = s.mode().iloc[0] if not s.mode().empty else s.mean()
+        rows.append({
+            'Group': f'Group {i}',
+            'Mean': s.mean(),
+            'Median': s.median(),
+            'Mode': mode_val,
+        })
+
+    df = pd.DataFrame(rows)
+    df_melt = df.melt(id_vars=['Group'], value_vars=['Mean', 'Median', 'Mode'], var_name='Metric', value_name='Value')
+
+    fig = Figure(figsize=(9, 6), dpi=100)
+    ax = fig.add_subplot(111)
+
+    if df['Group'].nunique() > 1:
+        sns.barplot(data=df_melt, x='Metric', y='Value', hue='Group', ax=ax)
+    else:
+        sns.barplot(data=df_melt, x='Metric', y='Value', ax=ax)
+        leg = ax.get_legend()
+        if leg:
+            leg.remove()
+
+    ax.set_title('Central Tendency (Mean / Median / Mode)')
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=10))
+    fig.tight_layout()
+    return fig
+
+
+def variability_overview_figure(*groups):
+    plt.close('all')
+    prepared = _prepare_groups(*groups)
+    if not prepared:
+        messagebox.showwarning("Variability Overview", "No valid numeric data found.")
+        return None
+
+    rows = []
+    for i, vals in enumerate(prepared, start=1):
+        s = pd.Series(vals)
+        rows.append({'Group': f'Group {i}', 'Range': max(vals) - min(vals), 'Variance': s.var(), 'StdDev': s.std()})
+
+    df = pd.DataFrame(rows)
+    df_melt = df.melt(id_vars=['Group'], value_vars=['Range', 'Variance', 'StdDev'], var_name='Metric', value_name='Value')
+
+    fig = Figure(figsize=(9, 6), dpi=100)
+    ax = fig.add_subplot(111)
+
+    if df['Group'].nunique() > 1:
+        sns.lineplot(data=df_melt, x='Metric', y='Value', hue='Group', marker='o', ax=ax)
+    else:
+        sns.lineplot(data=df_melt, x='Metric', y='Value', marker='o', ax=ax)
+        leg = ax.get_legend()
+        if leg:
+            leg.remove()
+
+    ax.set_title('Variability Overview (Range / Variance / StdDev)')
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=10))
+    fig.tight_layout()
+    return fig
+
+
+def frequency_breakdown_figure(*groups):
+    plt.close('all')
+    prepared = _prepare_groups(*groups)
+    if not prepared:
+        messagebox.showwarning("Frequency Breakdown", "No valid numeric data found.")
+        return None
+
+    n = len(prepared)
+    fig, axes = plt.subplots(1, n, figsize=(4 * n, 4))
+    # normalize axes to iterable
+    if n == 1:
+        axes = [axes]
+    else:
+        axes = axes.flatten() if hasattr(axes, 'flatten') else list(axes)
+
+    for idx, vals in enumerate(prepared):
+        ax = axes[idx]
+        series = pd.Series(vals)
+        freq = series.value_counts(normalize=True).sort_index() * 100
+        labels = [str(l) for l in freq.index]
+        sizes = freq.values
+        ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
+        ax.set_title(f'Group {idx+1} Frequency (%)')
+
+    # convert plt figure to Matplotlib Figure instance for Tk embedding
+    # fig is a pyplot.Figure; convert by returning it directly
+    return fig
+
+
+def distribution_summary_figure(*groups):
+    plt.close('all')
+    prepared = _prepare_groups(*groups)
+    if not prepared:
+        messagebox.showwarning("Distribution Summary", "No valid numeric data found.")
+        return None
+
+    # Create wide DataFrame (one column per group)
+    data = {f'Group {i+1}': pd.Series(vals) for i, vals in enumerate(prepared)}
+    df = pd.DataFrame(data)
+
+    fig = Figure(figsize=(9, 6), dpi=100)
+    ax = fig.add_subplot(111)
+
+    # Seaborn accepts wide-form DataFrame for boxplot
+    sns.boxplot(data=df, ax=ax)
+    sns.stripplot(data=df, color='purple', alpha=0.4, size=4, ax=ax)
+
+    ax.set_title('Distribution Summary (Box-and-Whisker by Group)')
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=10))
+    fig.tight_layout()
+    return fig
+
 class VisualizationWindow(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
@@ -253,44 +392,46 @@ class VisualizationWindow(tk.Toplevel):
 
         tk.Button(
             self.subcategory_frame,
-            text="Bar Graph",
+            text="Central Tendency",
             fg="#6c0987",
             bg="white",
             font=("Verdana", 10, "bold"),
             padx=12,
             pady=8,
-            command=self.show_bar_graph
+            command=self.show_central_tendency
         ).pack(side="left", padx=5)
 
         tk.Button(
             self.subcategory_frame,
-            text="Line Graph",
-            fg="#6c0987",
-            bg="white",
-            font=("Verdana", 10, "bold"),
-            padx=12,
-            pady=8
-        ).pack(side="left", padx=5)
-
-        tk.Button(
-            self.subcategory_frame,
-            text="Pie Chart",
-            fg="#6c0987",
-            bg="white",
-            font=("Verdana", 10, "bold"),
-            padx=12,
-            pady=8
-        ).pack(side="left", padx=5)
-
-        tk.Button(
-            self.subcategory_frame,
-            text="Box Plot",
+            text="Variability Overview",
             fg="#6c0987",
             bg="white",
             font=("Verdana", 10, "bold"),
             padx=12,
             pady=8,
-            command=self.show_box_plot
+            command=self.show_variability_overview
+        ).pack(side="left", padx=5)
+
+        tk.Button(
+            self.subcategory_frame,
+            text="Frequency Breakdown",
+            fg="#6c0987",
+            bg="white",
+            font=("Verdana", 10, "bold"),
+            padx=12,
+            pady=8,
+            command=self.show_frequency_breakdown
+        ).pack(side="left", padx=5)
+
+        tk.Button(
+            self.subcategory_frame,
+            text="Distribution Summary",
+            fg="#6c0987",
+            bg="white",
+            font=("Verdana", 10, "bold"),
+            padx=12,
+            pady=8,
+            command=self.show_distribution_summary
         ).pack(side="left", padx=5)
 
         tk.Label(self.footer_frame, bg="#d871f5").pack(expand=True)
@@ -310,6 +451,26 @@ class VisualizationWindow(tk.Toplevel):
 
     def show_scatter_plot(self):
         self.display_figure(scatter_plot(*[group["values"] for group in self.source_window.get_all_data()]))
+
+    def show_central_tendency(self):
+        groups = [group["values"] for group in self.source_window.get_all_data()]
+        fig = central_tendency_figure(*groups)
+        self.display_figure(fig)
+
+    def show_variability_overview(self):
+        groups = [group["values"] for group in self.source_window.get_all_data()]
+        fig = variability_overview_figure(*groups)
+        self.display_figure(fig)
+
+    def show_frequency_breakdown(self):
+        groups = [group["values"] for group in self.source_window.get_all_data()]
+        fig = frequency_breakdown_figure(*groups)
+        self.display_figure(fig)
+
+    def show_distribution_summary(self):
+        groups = [group["values"] for group in self.source_window.get_all_data()]
+        fig = distribution_summary_figure(*groups)
+        self.display_figure(fig)
 
     def display_figure(self, figure):
         if figure is None:
