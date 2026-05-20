@@ -55,6 +55,7 @@ class Descriptive(tk.Toplevel):
 
         # Grid data model (rows x cols)
         self.entries = []
+        self.extract_button = None
         self.total_rows = 5
         self.total_cols = DEFAULT_GROUPS
 
@@ -130,7 +131,7 @@ class Descriptive(tk.Toplevel):
             pady=8
         ).pack(side="left", padx=5)
 
-        tk.Button(
+        self.extract_button = tk.Button(
             control_frame,
             text="Extract Data",
             command=self.open_extracted_data_page,
@@ -139,8 +140,12 @@ class Descriptive(tk.Toplevel):
             font=("Verdana", 10, "bold"),
             padx=10,
             pady=8,
-            relief="flat"
-        ).pack(side="left", padx=5)
+            relief="flat",
+            state="disabled"
+        )
+        self.extract_button.pack(side="left", padx=5)
+
+        self.update_extract_button_state()
 
         self.protocol("WM_DELETE_WINDOW", self.destroy)
 
@@ -176,6 +181,7 @@ class Descriptive(tk.Toplevel):
                     justify="center"
                 )
                 entry.grid(row=row, column=col, padx=1, pady=1, sticky="nsew")
+                entry.bind("<KeyRelease>", self._on_input_change, add="+")
                 row_entries.append(entry)
             self.entries.append(row_entries)
 
@@ -193,9 +199,11 @@ class Descriptive(tk.Toplevel):
                 justify="center"
             )
             entry.grid(row=row_num, column=col, padx=1, pady=1, sticky="nsew")
+            entry.bind("<KeyRelease>", self._on_input_change, add="+")
             row_entries.append(entry)
         self.entries.append(row_entries)
         self.total_rows += 1
+        self.update_extract_button_state()
 
     # ---------------- ADD COLUMN ----------------
     def add_column(self):
@@ -220,9 +228,24 @@ class Descriptive(tk.Toplevel):
                 justify="center"
             )
             entry.grid(row=row + 1, column=new_col, padx=1, pady=1, sticky="nsew")
+            entry.bind("<KeyRelease>", self._on_input_change, add="+")
             self.entries[row].append(entry)
 
         self.total_cols += 1
+        self.update_extract_button_state()
+
+    def _on_input_change(self, event=None):
+        self.update_extract_button_state()
+
+    def update_extract_button_state(self):
+        has_values = any(
+            entry.get().strip()
+            for row_entries in self.entries
+            for entry in row_entries
+        )
+
+        if self.extract_button is not None:
+            self.extract_button.config(state="normal" if has_values else "disabled")
 
     # ---------------- GET DATA (column-wise) ----------------
     def get_all_data(self):

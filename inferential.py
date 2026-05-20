@@ -33,6 +33,7 @@ class Inferential(tk.Toplevel):
 
         # ---------------- GRID DATA ----------------
         self.entries = []
+        self.extract_buttons = []
         self.total_rows = 5
         self.total_cols = DEFAULT_GROUPS
 
@@ -171,8 +172,9 @@ class Inferential(tk.Toplevel):
         )
 
         self.significance.pack(side="left", padx=5)
+        self.significance.bind("<KeyRelease>", self._on_input_change, add="+")
 
-        tk.Button(
+        self.anova_button = tk.Button(
             control_frame,
             text="Extract Data (ANOVA)",
             command=self.anova_analysis,
@@ -181,10 +183,13 @@ class Inferential(tk.Toplevel):
             font=("Verdana", 10, "bold"),
             padx=10,
             pady=8,
-            relief="flat"
-        ).pack(side="left", padx=5)
+            relief="flat",
+            state="disabled"
+        )
+        self.anova_button.pack(side="left", padx=5)
+        self.extract_buttons.append(self.anova_button)
 
-        tk.Button(
+        self.correlation_button = tk.Button(
             control_frame,
             text="Extract Data (Correlation)",
             command=self.correlation_analysis,
@@ -193,8 +198,13 @@ class Inferential(tk.Toplevel):
             font=("Verdana", 10, "bold"),
             padx=10,
             pady=8,
-            relief="flat"
-        ).pack(side="left", padx=5)
+            relief="flat",
+            state="disabled"
+        )
+        self.correlation_button.pack(side="left", padx=5)
+        self.extract_buttons.append(self.correlation_button)
+
+        self.update_extract_button_state()
 
         self.parent = parent
 
@@ -257,6 +267,8 @@ class Inferential(tk.Toplevel):
                     sticky="nsew"
                 )
 
+                entry.bind("<KeyRelease>", self._on_input_change, add="+")
+
                 row_entries.append(entry)
 
             self.entries.append(row_entries)
@@ -290,11 +302,14 @@ class Inferential(tk.Toplevel):
                 sticky="nsew"
             )
 
+            entry.bind("<KeyRelease>", self._on_input_change, add="+")
+
             row_entries.append(entry)
 
         self.entries.append(row_entries)
 
         self.total_rows += 1
+        self.update_extract_button_state()
 
     # =========================================================
     # ADD COLUMN
@@ -339,9 +354,27 @@ class Inferential(tk.Toplevel):
                 sticky="nsew"
             )
 
+            entry.bind("<KeyRelease>", self._on_input_change, add="+")
+
             self.entries[row].append(entry)
 
         self.total_cols += 1
+        self.update_extract_button_state()
+
+    def _on_input_change(self, event=None):
+        self.update_extract_button_state()
+
+    def update_extract_button_state(self):
+        has_group_values = any(
+            entry.get().strip()
+            for row_entries in self.entries
+            for entry in row_entries
+        )
+        has_significance = bool(self.significance.get().strip())
+        should_enable = has_group_values and has_significance
+
+        for button in self.extract_buttons:
+            button.config(state="normal" if should_enable else "disabled")
 
     # =========================================================
     # GET DATA
