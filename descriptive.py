@@ -1,4 +1,6 @@
 import tkinter as tk
+from tkinter import filedialog
+import csv
 from tkinter import ttk
 import statistics
 from collections import Counter
@@ -398,10 +400,82 @@ class Descriptive(tk.Toplevel):
             font=("Verdana", 10, "bold"),
             padx=20,
             pady=10,
-            command=lambda: [self.destroy(), Descriptive(root)]
+            command=win.destroy
+        ).pack(side="left", padx=8)
+
+        tk.Button(
+            button_row,
+            text="Export CSV",
+            fg="white",
+            bg="#6c0987",
+            font=("Verdana", 10, "bold"),
+            padx=20,
+            pady=10,
+            command=lambda: self.export_results_csv(data)
         ).pack(side="left", padx=8)
 
         tk.Label(footer_frame, bg="#d871f5").pack(expand=True)
+
+    def export_results_csv(self, data):
+        file_path = filedialog.asksaveasfilename(
+            parent=self,
+            title="Save Statistical Results",
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+            initialfile="descriptive_results.csv"
+        )
+
+        if not file_path:
+            return
+
+        fieldnames = [
+            "Group",
+            "Mean",
+            "Median",
+            "Mode",
+            "Range",
+            "Variance",
+            "Std Dev",
+            "Highest Frequency",
+            "Frequency Values"
+        ]
+
+        with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+            writer.writeheader()
+
+            for group in data:
+                stats = self.analyze_group(group["values"])
+
+                if stats is None:
+                    writer.writerow({
+                        "Group": group["group"],
+                        "Mean": "",
+                        "Median": "",
+                        "Mode": "",
+                        "Range": "",
+                        "Variance": "",
+                        "Std Dev": "",
+                        "Highest Frequency": "",
+                        "Frequency Values": ""
+                    })
+                    continue
+
+                freq = stats["frequency"]
+                highest_count = max(freq.values()) if freq else ""
+                highest_values = [value for value, count in freq.items() if count == highest_count] if freq else []
+
+                writer.writerow({
+                    "Group": group["group"],
+                    "Mean": stats["mean"],
+                    "Median": stats["median"],
+                    "Mode": stats["mode"] if stats["mode"] is not None else "None",
+                    "Range": stats["range"],
+                    "Variance": stats["variance"],
+                    "Std Dev": stats["std_dev"],
+                    "Highest Frequency": highest_count,
+                    "Frequency Values": highest_values
+                })
 
     def analyze_group(self, values):
         # convert to numbers (ignore blanks)
