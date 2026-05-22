@@ -421,10 +421,10 @@ class Descriptive(tk.Toplevel):
         result["mean"] = statistics.mean(nums)
         result["median"] = statistics.median(nums)
 
-        try:
-            result["mode"] = statistics.mode(nums)
-        except:
-            result["mode"] = "No unique mode"
+        freq = Counter(nums)
+        highest_count = max(freq.values())
+        mode_values = [value for value, count in freq.items() if count == highest_count]
+        result["mode"] = mode_values[0] if len(mode_values) == 1 else None
 
         # --- Dispersion ---
         result["range"] = max(nums) - min(nums)
@@ -437,7 +437,6 @@ class Descriptive(tk.Toplevel):
             result["std_dev"] = 0
 
         # --- Frequency Table ---
-        freq = Counter(nums)
         result["frequency"] = dict(freq)
 
         return result
