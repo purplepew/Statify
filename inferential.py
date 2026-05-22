@@ -1,6 +1,10 @@
 import tkinter as tk
+from tkinter import filedialog
+import csv
 from tkinter import ttk
 import statistics
+import data_labs
+import stat_basic
 import visualization
 
 import pyglet
@@ -57,7 +61,8 @@ class Inferential(tk.Toplevel):
             bg="#6c0987",
             fg="white",
             relief="flat",
-            font=("Verdana", 10, "bold")
+            font=("Verdana", 10, "bold"),
+            command=lambda: data_labs.DataLabWindow(self)
         ).pack(side="right", padx=15)
 
         tk.Button(
@@ -66,7 +71,8 @@ class Inferential(tk.Toplevel):
             bg="#6c0987",
             fg="white",
             relief="flat",
-            font=("Verdana", 10, "bold")
+            font=("Verdana", 10, "bold"),
+            command=lambda: stat_basic.StatBasic(self)
         ).pack(side="right", padx=15)
 
         tk.Button(
@@ -76,7 +82,7 @@ class Inferential(tk.Toplevel):
             fg="white",
             relief="flat",
             font=("Verdana", 10, "bold"),
-            command=self.destroy
+            command=self.go_home
         ).pack(side="right", padx=15)
 
         # ---------------- WORKSPACE ----------------
@@ -207,11 +213,7 @@ class Inferential(tk.Toplevel):
         self.update_extract_button_state()
 
         self.parent = parent
-
-        def on_close():
-            root.destroy()
-
-        self.protocol("WM_DELETE_WINDOW", on_close)
+        self.protocol("WM_DELETE_WINDOW", self.go_home)
 
     # =========================================================
     # GRID
@@ -375,6 +377,22 @@ class Inferential(tk.Toplevel):
 
         for button in self.extract_buttons:
             button.config(state="normal" if should_enable else "disabled")
+
+    def go_home(self):
+        home_window = None
+        if self.parent is not None:
+            home_window = getattr(self.parent, "master", None)
+            try:
+                self.parent.destroy()
+            except tk.TclError:
+                pass
+
+        if home_window is not None:
+            try:
+                home_window.deiconify()
+                home_window.lift()
+            except tk.TclError:
+                pass
 
     # =========================================================
     # GET DATA
@@ -751,6 +769,33 @@ class Inferential(tk.Toplevel):
         else:
             tk.Label(comparison_frame_inner, text="No pairwise comparisons available.", bg="white").pack(anchor="w", pady=4)
 
+        button_row = tk.Frame(win, bg="white")
+        button_row.pack(fill="x", pady=(0, 12))
+
+        tk.Button(
+            button_row,
+            text="Export CSV",
+            command=lambda: self.export_anova_results_csv(results),
+            bg="#6c0987",
+            fg="white",
+            font=("Verdana", 10, "bold"),
+            padx=12,
+            pady=8,
+            relief="flat"
+        ).pack(side="left", padx=20)
+
+        tk.Button(
+            button_row,
+            text="Close",
+            command=win.destroy,
+            bg="#6c0987",
+            fg="white",
+            font=("Verdana", 10, "bold"),
+            padx=12,
+            pady=8,
+            relief="flat"
+        ).pack(side="right", padx=20)
+
     def open_extracted_correlation_data_page(self):
         win = tk.Toplevel(self)
         win.title("Inferential Results (Correlation)")
@@ -863,6 +908,101 @@ class Inferential(tk.Toplevel):
             pady=8,
             relief="flat"
         ).pack(pady=(20, 0))
+
+        tk.Button(
+            result_frame,
+            text="Export CSV",
+            command=lambda: self.export_correlation_results_csv(results),
+            bg="#6c0987",
+            fg="white",
+            font=("Verdana", 10, "bold"),
+            padx=12,
+            pady=8,
+            relief="flat"
+        ).pack(pady=(10, 0))
+
+    def export_anova_results_csv(self, results):
+        file_path = filedialog.asksaveasfilename(
+            parent=self,
+            title="Save ANOVA Results",
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+            initialfile="inferential_anova_results.csv"
+        )
+
+        if not file_path:
+            return
+
+        with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerow(["Section", "Field 1", "Field 2", "Field 3", "Field 4", "Value"])
+            writer.writerow(["ANOVA Summary", "F Value", "", "", "", results["F_value"]])
+            writer.writerow(["ANOVA Summary", "Critical F", "", "", "", results["crit_F"] if results["crit_F"] is not None else "N/A"])
+            writer.writerow(["ANOVA Summary", "Decision", "", "", "", "Reject H0" if results["significant"] else "Fail to Reject H0"])
+            writer.writerow(["ANOVA Summary", "Alpha", "", "", "", results["alpha"]])
+            writer.writerow(["ANOVA Summary", "SS Between", "", "", "", results["ss_between"]])
+            writer.writerow(["ANOVA Summary", "SS Within", "", "", "", results["ss_within"]])
+            writer.writerow(["ANOVA Summary", "MS Between", "", "", "", results["MS_between"]])
+            writer.writerow(["ANOVA Summary", "MS Within", "", "", "", results["MS_within"]])
+            writer.writerow(["ANOVA Summary", "df Between", "", "", "", results["df_between"]])
+            writer.writerow(["ANOVA Summary", "df Within", "", "", "", results["df_within"]])
+            writer.writerow(["ANOVA Summary", "q Value", "", "", "", results["q_value"] if results["q_value"] is not None else "N/A"])
+            writer.writerow(["ANOVA Summary", "HSD", "", "", "", results["HSD"] if results["HSD"] is not None else "N/A"])
+            writer.writerow([])
+            writer.writerow(["Pairwise Comparison", "Group 1", "Group 2", "Mean Difference", "Significant", "HSD"])
+
+            for comp in results.get("compare_group", []):
+                writer.writerow([
+                    "Pairwise Comparison",
+                    comp["group1"],
+                    comp["group2"],
+                    comp["mean_diff"],
+                    "Yes" if comp["significant"] else "No",
+                    results["HSD"] if results["HSD"] is not None else "N/A"
+                ])
+
+    def export_correlation_results_csv(self, results):
+        file_path = filedialog.asksaveasfilename(
+            parent=self,
+            title="Save Correlation Results",
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+            initialfile="inferential_correlation_results.csv"
+        )
+
+        if not file_path:
+            return
+
+        alpha = self.significance.get().strip()
+        try:
+            alpha_value = (100 - float(alpha)) / 100
+        except:
+            alpha_value = "N/A"
+
+        with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerow(["X", "Y", "X^2", "Y^2", "XY"])
+            for i in range(len(results["x_values"])):
+                writer.writerow([
+                    results["x_values"][i],
+                    results["y_values"][i],
+                    results["xsquared"][i],
+                    results["ysquared"][i],
+                    results["xy"][i]
+                ])
+
+            writer.writerow([])
+            writer.writerow(["Summary", "Value", ""])
+            writer.writerow(["Summary", "Sum X", results["sum_x"]])
+            writer.writerow(["Summary", "Sum Y", results["sum_y"]])
+            writer.writerow(["Summary", "Sum X^2", results["sum_xsquared"]])
+            writer.writerow(["Summary", "Sum Y^2", results["sum_ysquared"]])
+            writer.writerow(["Summary", "Sum XY", results["sum_xy"]])
+            writer.writerow(["Summary", "Correlation Coefficient", results["r"]])
+            writer.writerow(["Summary", "t Value", results["t_value"]])
+            writer.writerow(["Summary", "Critical t Value", results["t_crit"] if results["t_crit"] is not None else "N/A"])
+            writer.writerow(["Summary", "p Value", results["p_value"] if results["p_value"] is not None else "N/A"])
+            writer.writerow(["Summary", "Alpha", alpha_value])
 
 
 if __name__ == "__main__":
