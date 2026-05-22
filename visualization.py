@@ -142,8 +142,8 @@ def bar_graph(*groups):
     width = 0.35
 
     # Create bars
-    bars1 = axis.bar(x - width/2, means, width, label="Mean", color="#6c0987", alpha=0.8)
-    bars2 = axis.bar(x + width/2, medians, width, label="Median", color="#d871f5", alpha=0.8)
+    bars1 = axis.bar(x - width/2, means, width, label="Mean", color="#38476e", alpha=0.8)
+    bars2 = axis.bar(x + width/2, medians, width, label="Median", color="#B9B0EB", alpha=0.8)
 
     # Labels and title
     axis.set_xlabel("Groups", fontsize=12, fontweight="bold")
@@ -180,7 +180,7 @@ def scatter_plot(*groups):
     figure = Figure(figsize=(8, 8), dpi=100)
     axis = figure.add_subplot(111)
 
-    axis.scatter(prepared_groups[0], prepared_groups[1], color="#6c0987", alpha=0.7, edgecolor="white", s=80)
+    axis.scatter(prepared_groups[0], prepared_groups[1], color="#38476e", alpha=0.7, edgecolor="white", s=80)
     
     axis.set_xlabel("Group 1", fontsize=8, fontweight="bold")
     axis.set_ylabel("Group 2", fontsize=8, fontweight="bold")
@@ -341,11 +341,11 @@ class VisualizationWindow(tk.Toplevel):
         x = int((screen_width / 2) - (window_width / 2))
         y = int((screen_height / 2) - (window_height / 2))
         self.geometry(f"{window_width}x{window_height}+{x}+{y}")
-        self.configure(bg="#d871f5")
+        self.configure(bg="#B9B0EB")
 
         self.subcategories_visible = False
 
-        header_frame = tk.Frame(self, bg="#6c0987", height=60)
+        header_frame = tk.Frame(self, bg="#38476e", height=60)
         header_frame.pack(side="top", fill="x")
         header_frame.pack_propagate(False)
 
@@ -354,10 +354,10 @@ class VisualizationWindow(tk.Toplevel):
             text="Show Visualization",
             font=("Georgia", 14, "bold"),
             fg="white",
-            bg="#6c0987"
+            bg="#38476e"
         ).pack(side="left", padx=20)
 
-        content_frame = tk.Frame(self, bg="#d871f5")
+        content_frame = tk.Frame(self, bg="#B9B0EB")
         content_frame.pack(fill="both", expand=True)
 
         self.chart_frame = tk.Frame(content_frame, bg="white", highlightbackground="gray80", highlightthickness=1)
@@ -372,28 +372,28 @@ class VisualizationWindow(tk.Toplevel):
         )
         self.chart_placeholder.pack(expand=True)
 
-        self.footer_frame = tk.Frame(content_frame, bg="#d871f5")
+        self.footer_frame = tk.Frame(content_frame, bg="#B9B0EB")
         self.footer_frame.pack(side="bottom", fill="x", pady=20)
 
-        tk.Label(self.footer_frame, bg="#d871f5").pack(expand=True)
+        tk.Label(self.footer_frame, bg="#B9B0EB").pack(expand=True)
 
         tk.Button(
             self.footer_frame,
             text="Show Visualization",
             fg="white",
-            bg="#6c0987",
+            bg="#38476e",
             font=("Verdana", 10, "bold"),
             padx=20,
             pady=10,
             command=self.toggle_subcategories
         ).pack(pady=5)
 
-        self.subcategory_frame = tk.Frame(self.footer_frame, bg="#d871f5")
+        self.subcategory_frame = tk.Frame(self.footer_frame, bg="#B9B0EB")
 
         tk.Button(
             self.subcategory_frame,
             text="Central Tendency",
-            fg="#6c0987",
+            fg="#38476e",
             bg="white",
             font=("Verdana", 10, "bold"),
             padx=12,
@@ -404,7 +404,7 @@ class VisualizationWindow(tk.Toplevel):
         tk.Button(
             self.subcategory_frame,
             text="Variability Overview",
-            fg="#6c0987",
+            fg="#38476e",
             bg="white",
             font=("Verdana", 10, "bold"),
             padx=12,
@@ -415,7 +415,7 @@ class VisualizationWindow(tk.Toplevel):
         tk.Button(
             self.subcategory_frame,
             text="Frequency Breakdown",
-            fg="#6c0987",
+            fg="#38476e",
             bg="white",
             font=("Verdana", 10, "bold"),
             padx=12,
@@ -426,7 +426,7 @@ class VisualizationWindow(tk.Toplevel):
         tk.Button(
             self.subcategory_frame,
             text="Distribution Summary",
-            fg="#6c0987",
+            fg="#38476e",
             bg="white",
             font=("Verdana", 10, "bold"),
             padx=12,
@@ -434,7 +434,7 @@ class VisualizationWindow(tk.Toplevel):
             command=self.show_distribution_summary
         ).pack(side="left", padx=5)
 
-        tk.Label(self.footer_frame, bg="#d871f5").pack(expand=True)
+        tk.Label(self.footer_frame, bg="#B9B0EB").pack(expand=True)
 
     def toggle_subcategories(self):
         if self.subcategories_visible:
@@ -502,9 +502,9 @@ class VisualizationScatterPlotExclusive(tk.Toplevel):
         x = int((screen_width / 2) - (window_width / 2))
         y = int((screen_height / 2) - (window_height / 2))
         self.geometry(f"{window_width}x{window_height}+{x}+{y}")
-        self.configure(bg="#d871f5")
+        self.configure(bg="#B9B0EB")
 
-        header_frame = tk.Frame(self, bg="#6c0987", height=60)
+        header_frame = tk.Frame(self, bg="#38476e", height=60)
         header_frame.pack(side="top", fill="x")
         header_frame.pack_propagate(False)
 
@@ -513,13 +513,13 @@ class VisualizationScatterPlotExclusive(tk.Toplevel):
             text="Correlation Scatter Plot",
             font=("Georgia", 14, "bold"),
             fg="white",
-            bg="#6c0987"
+            bg="#38476e"
         ).pack(side="left", padx=20)
 
-        content_frame = tk.Frame(self, bg="#d871f5")
+        content_frame = tk.Frame(self, bg="#B9B0EB")
         content_frame.pack(fill="x", expand=True)
 
-        self.chart_frame = tk.Frame(content_frame, bg="white", highlightbackground="gray80", highlightthickness=1)
+        self.chart_frame = tk.Frame(content_frame, bg="#B9B0EB", highlightbackground="gray80", highlightthickness=1)
         self.chart_frame.pack(side="top", fill="x", expand=True, padx=20, pady=(20, 10))
 
         self.show_scatter_plot()

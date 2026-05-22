@@ -33,22 +33,30 @@ class StatBasic(tk.Toplevel):
         self.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
         # --- UI Layout ---
-        nav_frame = tk.Frame(self, bg="#6c0987", height=60)
+        nav_frame = tk.Frame(self, bg="#38476e", height=60)
         nav_frame.pack(side="top", fill="x")
         nav_frame.pack_propagate(False)
 
-        tk.Label(nav_frame, text="Statistics Calc",font=("Georgia",10,"bold"),fg="white", bg="#6c0987", padx=20).pack(side="left")
+        tk.Label(nav_frame, text="Statistics Calc",font=("Georgia",10,"bold"),fg="white", bg="#38476e", padx=20).pack(side="left")
 
-        data_lab_btn = tk.Button(nav_frame, text="Data Lab", relief="flat",font=("Verdana",10,"bold"), fg="white", bg="#6c0987", command=lambda: data_labs.DataLabWindow(self))
+        data_lab_btn = tk.Button(
+            nav_frame,
+            text="Data Lab",
+            relief="flat",
+            font=("Verdana", 10, "bold"),
+            fg="white",
+            bg="#38476e",
+            command=lambda: self.open_data_lab()
+        )
         data_lab_btn.pack(side="right", padx=15)
 
-        data_lab_btn = tk.Button(nav_frame, text="Stats Basics", relief="flat",font=("Verdana",10,"bold"), fg="white", bg="#6c0987")
+        data_lab_btn = tk.Button(nav_frame, text="Stats Basics", relief="flat",font=("Verdana",10,"bold"), fg="white", bg="#38476e")
         data_lab_btn.pack(side="right", padx=15)
 
-        data_lab_btn = tk.Button(nav_frame, text="Home", relief="flat",font=("Verdana",10,"bold"), fg="white", bg="#6c0987", command=self.on_home)
+        data_lab_btn = tk.Button(nav_frame, text="Home", relief="flat",font=("Verdana",10,"bold"), fg="white", bg="#38476e", command=self.on_home)
         data_lab_btn.pack(side="right", padx=15)
 
-        main_content = tk.Frame(self, bg="#d871f5")
+        main_content = tk.Frame(self, bg="#B9B0EB")
         main_content.pack(expand=True, fill="both")
         self.main_content = main_content
         if os.path.isdir(self.img_dir):
@@ -57,18 +65,18 @@ class StatBasic(tk.Toplevel):
                                     key=lambda x: int(x.split('.')[0]) if x.split('.')[0].isdigit() else 0)
 
         if self.img_files:
-            self.my_label = tk.Label(main_content, bg="#d871f5")
+            self.my_label = tk.Label(main_content, bg="#B9B0EB")
             self.my_label.pack(fill="both", expand=True)
 
             # Button frame
-            button_frame = tk.Frame(main_content, bg="#d871f5", height=60)
+            button_frame = tk.Frame(main_content, bg="#B9B0EB", height=60)
             button_frame.pack(side="bottom", fill="x")
             button_frame.pack_propagate(False)
 
-            self.back_btn = tk.Button(button_frame, text="Back", font=("Verdana", 10, "bold"), fg="white", bg="#6c0987", padx=20, pady=10, command=self.show_previous_image)
+            self.back_btn = tk.Button(button_frame, text="Back", font=("Verdana", 10, "bold"), fg="white", bg="#38476e", padx=20, pady=10, command=self.show_previous_image)
             self.back_btn.pack(side="left", padx=30, pady=10)
 
-            self.next_btn = tk.Button(button_frame, text="Next", font=("Verdana", 10, "bold"), fg="white", bg="#6c0987", padx=20, pady=10, command=self.show_next_image)
+            self.next_btn = tk.Button(button_frame, text="Next", font=("Verdana", 10, "bold"), fg="white", bg="#38476e", padx=20, pady=10, command=self.show_next_image)
             self.next_btn.pack(side="right", padx=30, pady=10)
 
             # Load and display the first image
@@ -103,6 +111,9 @@ class StatBasic(tk.Toplevel):
                 pady=10,
                 command=self.on_home
             ).pack(pady=(0, 30))
+    def open_data_lab(self):
+        self.destroy()
+        data_labs.DataLabWindow(self.master)
 
     def on_home(self):
         self.master.deiconify()

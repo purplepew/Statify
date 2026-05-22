@@ -1,10 +1,6 @@
 import tkinter as tk
-from tkinter import filedialog
-import csv
 from tkinter import ttk
 import statistics
-import data_labs
-import stat_basic
 import visualization
 
 import pyglet
@@ -33,7 +29,7 @@ class Inferential(tk.Toplevel):
 
         self.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
-        self.configure(bg="#d871f5")
+        self.configure(bg="#B9B0EB")
 
         # ---------------- GRID DATA ----------------
         self.entries = []
@@ -42,56 +38,54 @@ class Inferential(tk.Toplevel):
         self.total_cols = DEFAULT_GROUPS
 
         # ---------------- NAVIGATION ----------------
-        nav_frame = tk.Frame(self, bg="#6c0987", height=60)
+        nav_frame = tk.Frame(self, bg="#38476e", height=60)
         nav_frame.pack(side="top", fill="x")
         nav_frame.pack_propagate(False)
 
         tk.Label(
             nav_frame,
-            text="Statistics Calc",
-            font=("Georgia", 10, "bold"),
+            text="Statify",
+            font=("Safira March Personal Use Only", 10, "bold"),
             fg="white",
-            bg="#6c0987",
+            bg="#38476e",
             padx=20
         ).pack(side="left")
 
         tk.Button(
             nav_frame,
             text="Data Lab",
-            bg="#6c0987",
+            bg="#38476e",
             fg="white",
             relief="flat",
-            font=("Verdana", 10, "bold"),
-            command=lambda: data_labs.DataLabWindow(self)
+            font=("Verdana", 10, "bold")
         ).pack(side="right", padx=15)
 
         tk.Button(
             nav_frame,
             text="Stats Basics",
-            bg="#6c0987",
+            bg="#38476e",
             fg="white",
             relief="flat",
-            font=("Verdana", 10, "bold"),
-            command=lambda: stat_basic.StatBasic(self)
+            font=("Verdana", 10, "bold")
         ).pack(side="right", padx=15)
 
         tk.Button(
             nav_frame,
             text="Home",
-            bg="#6c0987",
+            bg="#38476e",
             fg="white",
             relief="flat",
             font=("Verdana", 10, "bold"),
-            command=self.go_home
+            command=self.destroy
         ).pack(side="right", padx=15)
 
         # ---------------- WORKSPACE ----------------
-        self.workspace = tk.Frame(self, bg="#d871f5")
+        self.workspace = tk.Frame(self, bg="#B9B0EB")
         self.workspace.pack(fill="both", expand=True, padx=20, pady=20)
 
         self.canvas = tk.Canvas(
             self.workspace,
-            bg="#d871f5",
+            bg="#B9B0EB",
             highlightthickness=0
         )
 
@@ -135,14 +129,14 @@ class Inferential(tk.Toplevel):
         self.build_grid()
 
         # ---------------- CONTROLS ----------------
-        control_frame = tk.Frame(self, bg="#d871f5")
+        control_frame = tk.Frame(self, bg="#B9B0EB")
         control_frame.pack(pady=10)
 
         tk.Button(
             control_frame,
             text="Add Row",
             command=self.add_row,
-            bg="#6c0987",
+            bg="#38476e",
             fg="white",
             font=("Verdana", 10, "bold"),
             relief="flat",
@@ -154,7 +148,7 @@ class Inferential(tk.Toplevel):
             control_frame,
             text="Add Column",
             command=self.add_column,
-            bg="#6c0987",
+            bg="#38476e",
             fg="white",
             font=("Verdana", 10, "bold"),
             relief="flat",
@@ -165,7 +159,7 @@ class Inferential(tk.Toplevel):
         tk.Label(
             control_frame,
             text="Level of Significance (alpha) in %:",
-            bg="#d871f5",
+            bg="#B9B0EB",
             font=("Georgia", 12)
         ).pack(side="left", padx=10)
 
@@ -185,7 +179,7 @@ class Inferential(tk.Toplevel):
             text="Extract Data (ANOVA)",
             command=self.anova_analysis,
             fg="white",
-            bg="#6c0987",
+            bg="#38476e",
             font=("Verdana", 10, "bold"),
             padx=10,
             pady=8,
@@ -200,7 +194,7 @@ class Inferential(tk.Toplevel):
             text="Extract Data (Correlation)",
             command=self.correlation_analysis,
             fg="white",
-            bg="#6c0987",
+            bg="#38476e",
             font=("Verdana", 10, "bold"),
             padx=10,
             pady=8,
@@ -213,7 +207,11 @@ class Inferential(tk.Toplevel):
         self.update_extract_button_state()
 
         self.parent = parent
-        self.protocol("WM_DELETE_WINDOW", self.go_home)
+
+        def on_close():
+            root.destroy()
+
+        self.protocol("WM_DELETE_WINDOW", on_close)
 
     # =========================================================
     # GRID
@@ -232,7 +230,7 @@ class Inferential(tk.Toplevel):
             tk.Label(
                 self.grid_frame,
                 text=f"Group {col + 1}",
-                bg="#6c0987",
+                bg="#38476e",
                 fg="white",
                 font=("Verdana", 10, "bold"),
                 width=15,
@@ -324,7 +322,7 @@ class Inferential(tk.Toplevel):
         tk.Label(
             self.grid_frame,
             text=f"Group {new_col + 1}",
-            bg="#6c0987",
+            bg="#38476e",
             fg="white",
             font=("Verdana", 10, "bold"),
             width=15,
@@ -377,22 +375,6 @@ class Inferential(tk.Toplevel):
 
         for button in self.extract_buttons:
             button.config(state="normal" if should_enable else "disabled")
-
-    def go_home(self):
-        home_window = None
-        if self.parent is not None:
-            home_window = getattr(self.parent, "master", None)
-            try:
-                self.parent.destroy()
-            except tk.TclError:
-                pass
-
-        if home_window is not None:
-            try:
-                home_window.deiconify()
-                home_window.lift()
-            except tk.TclError:
-                pass
 
     # =========================================================
     # GET DATA
@@ -685,27 +667,27 @@ class Inferential(tk.Toplevel):
 
         win.geometry("700x500")
 
-        win.configure(bg="white")
+        win.configure(bg="#B9B0EB")
 
         tk.Label(
             win,
             text="ANOVA Results",
             font=("Safira March Personal Use Only", 24, "bold"),
-            bg="#6c0987",
+            bg="#38476e",
             fg="white",
             pady=15
         ).pack(fill="x")
 
         results = self.anova_results
 
-        result_frame = tk.Frame(win, bg="white")
+        result_frame = tk.Frame(win, bg="#B9B0EB")
 
         result_frame.pack(expand=True)
 
         tk.Label(
             result_frame,
             text=f"F Value: {results['F_value']:.2f}",
-            bg="white",
+            bg="#B9B0EB",
             font=("Georgia", 14)
         ).pack(pady=10)
 
@@ -718,7 +700,7 @@ class Inferential(tk.Toplevel):
         tk.Label(
             result_frame,
             text=f"Critical F: {crit_text}",
-            bg="white",
+            bg="#B9B0EB",
             font=("Georgia", 14)
         ).pack(pady=10)
 
@@ -731,116 +713,89 @@ class Inferential(tk.Toplevel):
         tk.Label(
             result_frame,
             text=f"Decision: {decision}",
-            bg="white",
-            fg="#6c0987",
+            bg="#B9B0EB",
+            fg="#38476e",
             font=("Georgia", 16, "bold")
         ).pack(pady=10)
 
-        result_frame2 = tk.Frame(win, bg="white")
+        result_frame2 = tk.Frame(win, bg="#B9B0EB")
         result_frame2.pack(fill="x", expand=True)
 
         tk.Label(
             result_frame2,
             text="Tukey Pairwise Comparisons",
             font=("Safira March Personal Use Only", 24, "bold"),
-            bg="#6c0987",
+            bg="#38476e",
             fg="white",
             pady=15
         ).pack(fill="x")
         
-        comparison_frame_inner = tk.Frame(result_frame2, bg="white")
+        comparison_frame_inner = tk.Frame(result_frame2, bg="#B9B0EB")
         comparison_frame_inner.pack(fill="both", expand=True, padx=20, pady=(0, 10))
 
-        tk.Label(comparison_frame_inner, text=f"HSD threshold: {results['HSD']:.2f}", bg="white", font=("Georgia", 12, "italic")).pack(anchor="w", pady=(8, 4))
-        tk.Label(comparison_frame_inner, text="Mean difference vs HSD", bg="white", font=("Georgia", 12, "bold")).pack(anchor="w", pady=(8, 4))
+        tk.Label(comparison_frame_inner, text=f"HSD threshold: {results['HSD']:.2f}", bg="#B9B0EB", font=("Georgia", 12, "italic")).pack(anchor="w", pady=(8, 4))
+        tk.Label(comparison_frame_inner, text="Mean difference vs HSD", bg="#B9B0EB", font=("Georgia", 12, "bold")).pack(anchor="w", pady=(8, 4))
 
         if results['compare_group']:
             for comp in results['compare_group']:
                 sign_text = "Significant" if comp['significant'] else "Not Significant"
-                text_color = "#6c0987" if comp['significant'] else "black"
+                text_color = "#38476e" if comp['significant'] else "black"
                 tk.Label(
                     comparison_frame_inner,
                     text=f"Group {comp['group1']} vs Group {comp['group2']}: Δ={comp['mean_diff']:.2f}, HSD={results['HSD']:.2f} → {sign_text}",
-                    bg="white",
+                    bg="#B9B0EB",
                     fg=text_color,
                     wraplength=380,
                     justify="left"
                 ).pack(anchor="w", pady=2)
         else:
-            tk.Label(comparison_frame_inner, text="No pairwise comparisons available.", bg="white").pack(anchor="w", pady=4)
-
-        button_row = tk.Frame(win, bg="white")
-        button_row.pack(fill="x", pady=(0, 12))
-
-        tk.Button(
-            button_row,
-            text="Export CSV",
-            command=lambda: self.export_anova_results_csv(results),
-            bg="#6c0987",
-            fg="white",
-            font=("Verdana", 10, "bold"),
-            padx=12,
-            pady=8,
-            relief="flat"
-        ).pack(side="left", padx=20)
-
-        tk.Button(
-            button_row,
-            text="Close",
-            command=win.destroy,
-            bg="#6c0987",
-            fg="white",
-            font=("Verdana", 10, "bold"),
-            padx=12,
-            pady=8,
-            relief="flat"
-        ).pack(side="right", padx=20)
+            tk.Label(comparison_frame_inner, text="No pairwise comparisons available.", bg="#B9B0EB").pack(anchor="w", pady=4)
 
     def open_extracted_correlation_data_page(self):
         win = tk.Toplevel(self)
         win.title("Inferential Results (Correlation)")
         win.geometry("700x550")
-        win.configure(bg="white")
+        win.configure(bg="#B9B0EB")
 
         tk.Label(
             win,
             text="Correlation Results",
             font=("Safira March Personal Use Only", 24, "bold"),
-            bg="#6c0987",
+            bg="#38476e",
             fg="white",
             pady=8
         ).pack(fill="x", pady=(0, 10))
 
         results = self.correlation_result
 
-        result_frame = tk.Frame(win, bg="white")
+        result_frame = tk.Frame(win, bg="#B9B0EB")
 
         result_frame.pack(fill="x", expand=False, pady=5)
 
         # Table of values including summations and correlation coefficient
-        table_frame = tk.Frame(result_frame, bg="white")
+        table_frame = tk.Frame(result_frame, bg="#B9B0EB")
         table_frame.pack(pady=(0, 10))
         headers = ["X", "Y", "X²", "Y²", "XY"]
         for col, header in enumerate(headers):
-            tk.Label(table_frame, text=header, bg="#6c0987", fg="white", font=("Verdana", 10, "bold"), width=12).grid(row=0, column=col, padx=1, pady=1)        
+            tk.Label(table_frame, text=header, bg="#38476e", fg="white", font=("Verdana", 10, "bold"), width=12).grid(row=0, column=col, padx=1, pady=1)        
         for i in range(len(results['x_values'])):
-            tk.Label(table_frame, text=f"{results['x_values'][i]:.2f}", bg="white", font=("Georgia", 12)).grid(row=i+1, column=0, padx=1, pady=1)
-            tk.Label(table_frame, text=f"{results['y_values'][i]:.2f}", bg="white", font=("Georgia", 12)).grid(row=i+1, column=1, padx=1, pady=1)
-            tk.Label(table_frame, text=f"{results['xsquared'][i]:.2f}", bg="white", font=("Georgia", 12)).grid(row=i+1, column=2, padx=1, pady=1)
-            tk.Label(table_frame, text=f"{results['ysquared'][i]:.2f}", bg="white", font=("Georgia", 12)).grid(row=i+1, column=3, padx=1, pady=1)
-            tk.Label(table_frame, text=f"{results['xy'][i]:.2f}", bg="white", font=("Georgia", 12)).grid(row=i+1, column=4, padx=1, pady=1)
-        
-        tk.Label(table_frame, text="─" * 50, bg="white").grid(row=len(results['x_values']) + 1, column=0, columnspan=5, pady=(4, 4))
-        tk.Label(table_frame, text=f"ΣX: {results['sum_x']:.2f}", bg="white", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=0, padx=1, pady=1)
-        tk.Label(table_frame, text=f"ΣY: {results['sum_y']:.2f}", bg="white", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=1, padx=1, pady=1)
-        tk.Label(table_frame, text=f"ΣX²: {results['sum_xsquared']:.2f}", bg="white", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=2, padx=1, pady=1)
-        tk.Label(table_frame, text=f"ΣY²: {results['sum_ysquared']:.2f}", bg="white", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=3, padx=1, pady=1)
-        tk.Label(table_frame, text=f"ΣXY: {results['sum_xy']:.2f}", bg="white", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=4, padx=1, pady=1)
+            tk.Label(table_frame, text=f"{results['x_values'][i]:.2f}", bg="#B9B0EB", font=("Georgia", 12)).grid(row=i+1, column=0, padx=1, pady=1)
+            tk.Label(table_frame, text=f"{results['y_values'][i]:.2f}", bg="#B9B0EB", font=("Georgia", 12)).grid(row=i+1, column=1, padx=1, pady=1)
+            tk.Label(table_frame, text=f"{results['xsquared'][i]:.2f}", bg="#B9B0EB", font=("Georgia", 12)).grid(row=i+1, column=2, padx=1, pady=1)
+            tk.Label(table_frame, text=f"{results['ysquared'][i]:.2f}", bg="#B9B0EB", font=("Georgia", 12)).grid(row=i+1, column=3, padx=1, pady=1)
+            tk.Label(table_frame, text=f"{results['xy'][i]:.2f}", bg="#B9B0EB", font=("Georgia", 12)).grid(row=i+1, column=4, padx=1, pady=1)
+
+        tk.Label(table_frame, text="─" * 50, bg="#B9B0EB").grid(row=len(results['x_values']) + 1, column=0, columnspan=5, pady=(4, 4))
+        tk.Label(table_frame, text=f"ΣX: {results['sum_x']:.2f}", bg="#B9B0EB", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=0, padx=1, pady=1)
+        tk.Label(table_frame, text=f"ΣY: {results['sum_y']:.2f}", bg="#B9B0EB", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=1, padx=1, pady=1)
+        tk.Label(table_frame, text=f"ΣX²: {results['sum_xsquared']:.2f}", bg="#B9B0EB", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=2, padx=1, pady=1)
+        tk.Label(table_frame, text=f"ΣY²: {results['sum_ysquared']:.2f}", bg="#B9B0EB", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=3, padx=1, pady=1)
+        tk.Label(table_frame, text=f"ΣXY: {results['sum_xy']:.2f}", bg="#B9B0EB", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=4, padx=1, pady=1)
 
         tk.Label(
             result_frame,
             text=f"Correlation Coefficient: {results['r']:.2f}",
-            bg="white",
+            bg="#B9B0EB",
             font=("Georgia", 14)
         ).pack(pady=10)
 
@@ -871,8 +826,8 @@ class Inferential(tk.Toplevel):
         tk.Label(
             result_frame,
             text=f"Interpretation: {interpretation}",
-            bg="white",
-            fg="#6c0987",
+            bg="#B9B0EB",
+            fg="#38476e",
             font=("Georgia", 16, "bold")
         ).pack(pady=10)
 
@@ -881,7 +836,7 @@ class Inferential(tk.Toplevel):
         tk.Label(
             result_frame,
             text=f"t-value: {results['t_value']:.2f} | Critical t-value: {results['t_crit']:.2f} → {significance_text}",
-            bg="white",
+            bg="#B9B0EB",
             font=("Georgia", 12, "italic")
         ).pack(pady=(5,0))
 
@@ -892,7 +847,7 @@ class Inferential(tk.Toplevel):
         tk.Label(
             result_frame,
             text=f"p-value: {results['p_value']:.4f} | α: {(100-float(alpha))/100.0} → {p_significance_text}",
-            bg="white",
+            bg="#B9B0EB",
             font=("Georgia", 12, "italic")
         ).pack(pady=(0,5))
 
@@ -901,108 +856,13 @@ class Inferential(tk.Toplevel):
             result_frame,
             text="Show Scatter Plot",
             command=lambda: visualization.VisualizationScatterPlotExclusive(self),
-            bg="#6c0987",
+            bg="#38476e",
             fg="white",
             font=("Verdana", 10, "bold"),
             padx=12,
             pady=8,
             relief="flat"
         ).pack(pady=(20, 0))
-
-        tk.Button(
-            result_frame,
-            text="Export CSV",
-            command=lambda: self.export_correlation_results_csv(results),
-            bg="#6c0987",
-            fg="white",
-            font=("Verdana", 10, "bold"),
-            padx=12,
-            pady=8,
-            relief="flat"
-        ).pack(pady=(10, 0))
-
-    def export_anova_results_csv(self, results):
-        file_path = filedialog.asksaveasfilename(
-            parent=self,
-            title="Save ANOVA Results",
-            defaultextension=".csv",
-            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
-            initialfile="inferential_anova_results.csv"
-        )
-
-        if not file_path:
-            return
-
-        with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
-            writer = csv.writer(csv_file)
-            writer.writerow(["Section", "Field 1", "Field 2", "Field 3", "Field 4", "Value"])
-            writer.writerow(["ANOVA Summary", "F Value", "", "", "", results["F_value"]])
-            writer.writerow(["ANOVA Summary", "Critical F", "", "", "", results["crit_F"] if results["crit_F"] is not None else "N/A"])
-            writer.writerow(["ANOVA Summary", "Decision", "", "", "", "Reject H0" if results["significant"] else "Fail to Reject H0"])
-            writer.writerow(["ANOVA Summary", "Alpha", "", "", "", results["alpha"]])
-            writer.writerow(["ANOVA Summary", "SS Between", "", "", "", results["ss_between"]])
-            writer.writerow(["ANOVA Summary", "SS Within", "", "", "", results["ss_within"]])
-            writer.writerow(["ANOVA Summary", "MS Between", "", "", "", results["MS_between"]])
-            writer.writerow(["ANOVA Summary", "MS Within", "", "", "", results["MS_within"]])
-            writer.writerow(["ANOVA Summary", "df Between", "", "", "", results["df_between"]])
-            writer.writerow(["ANOVA Summary", "df Within", "", "", "", results["df_within"]])
-            writer.writerow(["ANOVA Summary", "q Value", "", "", "", results["q_value"] if results["q_value"] is not None else "N/A"])
-            writer.writerow(["ANOVA Summary", "HSD", "", "", "", results["HSD"] if results["HSD"] is not None else "N/A"])
-            writer.writerow([])
-            writer.writerow(["Pairwise Comparison", "Group 1", "Group 2", "Mean Difference", "Significant", "HSD"])
-
-            for comp in results.get("compare_group", []):
-                writer.writerow([
-                    "Pairwise Comparison",
-                    comp["group1"],
-                    comp["group2"],
-                    comp["mean_diff"],
-                    "Yes" if comp["significant"] else "No",
-                    results["HSD"] if results["HSD"] is not None else "N/A"
-                ])
-
-    def export_correlation_results_csv(self, results):
-        file_path = filedialog.asksaveasfilename(
-            parent=self,
-            title="Save Correlation Results",
-            defaultextension=".csv",
-            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
-            initialfile="inferential_correlation_results.csv"
-        )
-
-        if not file_path:
-            return
-
-        alpha = self.significance.get().strip()
-        try:
-            alpha_value = (100 - float(alpha)) / 100
-        except:
-            alpha_value = "N/A"
-
-        with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
-            writer = csv.writer(csv_file)
-            writer.writerow(["X", "Y", "X^2", "Y^2", "XY"])
-            for i in range(len(results["x_values"])):
-                writer.writerow([
-                    results["x_values"][i],
-                    results["y_values"][i],
-                    results["xsquared"][i],
-                    results["ysquared"][i],
-                    results["xy"][i]
-                ])
-
-            writer.writerow([])
-            writer.writerow(["Summary", "Value", ""])
-            writer.writerow(["Summary", "Sum X", results["sum_x"]])
-            writer.writerow(["Summary", "Sum Y", results["sum_y"]])
-            writer.writerow(["Summary", "Sum X^2", results["sum_xsquared"]])
-            writer.writerow(["Summary", "Sum Y^2", results["sum_ysquared"]])
-            writer.writerow(["Summary", "Sum XY", results["sum_xy"]])
-            writer.writerow(["Summary", "Correlation Coefficient", results["r"]])
-            writer.writerow(["Summary", "t Value", results["t_value"]])
-            writer.writerow(["Summary", "Critical t Value", results["t_crit"] if results["t_crit"] is not None else "N/A"])
-            writer.writerow(["Summary", "p Value", results["p_value"] if results["p_value"] is not None else "N/A"])
-            writer.writerow(["Summary", "Alpha", alpha_value])
 
 
 if __name__ == "__main__":

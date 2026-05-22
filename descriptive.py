@@ -7,6 +7,11 @@ from collections import Counter
 import visualization
 from config import DEFAULT_GROUPS
 
+import pyglet
+import os
+
+pyglet.font.add_file(os.path.abspath("Safira-March.ttf"))
+
 
 class Descriptive(tk.Toplevel):
     def __init__(self, parent):
@@ -22,16 +27,16 @@ class Descriptive(tk.Toplevel):
         y = int((screen_height / 2) - (window_height / 2))
         self.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
-        self.configure(bg="#d871f5")
+        self.configure(bg="#B9B0EB")
 
         self.groups = []
 
         # --- Top Navigation ---
-        nav_frame = tk.Frame(self, bg="#6c0987", height=60)
+        nav_frame = tk.Frame(self, bg="#38476e", height=60)
         nav_frame.pack(side="top", fill="x")
         nav_frame.pack_propagate(False)
 
-        tk.Label(nav_frame, text="Statistics Calc",font=("Georgia",10,"bold"),fg="white", bg="#6c0987", padx=20).pack(side="left")
+        tk.Label(nav_frame, text="Statify",font=("Safira March Personal Use Only",10,"bold"),fg="white", bg="#38476e", padx=20).pack(side="left")
 import tkinter as tk
 from tkinter import ttk
 import statistics
@@ -53,7 +58,7 @@ class Descriptive(tk.Toplevel):
         y = int((screen_height / 2) - (window_height / 2))
         self.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
-        self.configure(bg="#d871f5")
+        self.configure(bg="#B9B0EB")
 
         # Grid data model (rows x cols)
         self.entries = []
@@ -62,27 +67,27 @@ class Descriptive(tk.Toplevel):
         self.total_cols = DEFAULT_GROUPS
 
         # --- Top Navigation ---
-        nav_frame = tk.Frame(self, bg="#6c0987", height=60)
+        nav_frame = tk.Frame(self, bg="#38476e", height=60)
         nav_frame.pack(side="top", fill="x")
         nav_frame.pack_propagate(False)
 
-        tk.Label(nav_frame, text="Statistics Calc", font=("Georgia", 10, "bold"), fg="white", bg="#6c0987", padx=20).pack(side="left")
+        tk.Label(nav_frame, text="Statify", font=("Georgia", 10, "bold"), fg="white", bg="#38476e", padx=20).pack(side="left")
 
-        tk.Button(nav_frame, text="Data Lab", bg="#6c0987", fg="white",
+        tk.Button(nav_frame, text="Data Lab", bg="#38476e", fg="white",
                   relief="flat", font=("Verdana", 10, "bold")).pack(side="right", padx=15)
 
-        tk.Button(nav_frame, text="Stats Basics", bg="#6c0987", fg="white",
-                  relief="flat", font=("Verdana", 10, "bold")).pack(side="right", padx=15)
+        tk.Button(nav_frame, text="Stats Basics", bg="#38476e", fg="white",
+                  relief="flat", font=("Verdana", 10, "bold"), command=lambda: stat_basic.StatBasic(self)).pack(side="right", padx=15)
 
-        tk.Button(nav_frame, text="Home", bg="#6c0987", fg="white",
+        tk.Button(nav_frame, text="Home", bg="#38476e", fg="white",
                   relief="flat", font=("Verdana", 10, "bold"),
                   command=self.destroy).pack(side="right", padx=15)
 
         # --- Main Workspace (grid) ---
-        self.workspace = tk.Frame(self, bg="#d871f5")
+        self.workspace = tk.Frame(self, bg="#B9B0EB")
         self.workspace.pack(fill="both", expand=True, padx=20, pady=20)
 
-        self.canvas = tk.Canvas(self.workspace, bg="#d871f5", highlightthickness=0)
+        self.canvas = tk.Canvas(self.workspace, bg="#B9B0EB", highlightthickness=0)
 
         self.v_scroll = ttk.Scrollbar(self.workspace, orient="vertical", command=self.canvas.yview)
         self.h_scroll = ttk.Scrollbar(self.workspace, orient="horizontal", command=self.canvas.xview)
@@ -106,14 +111,14 @@ class Descriptive(tk.Toplevel):
         self.build_grid()
 
         # Controls (Add Row / Add Column / Extract)
-        control_frame = tk.Frame(self, bg="#d871f5")
+        control_frame = tk.Frame(self, bg="#B9B0EB")
         control_frame.pack(pady=10)
 
         tk.Button(
             control_frame,
             text="Add Row",
             command=self.add_row,
-            bg="#6c0987",
+            bg="#38476e",
             fg="white",
             font=("Verdana", 10, "bold"),
             relief="flat",
@@ -125,7 +130,7 @@ class Descriptive(tk.Toplevel):
             control_frame,
             text="Add Column",
             command=self.add_column,
-            bg="#6c0987",
+            bg="#38476e",
             fg="white",
             font=("Verdana", 10, "bold"),
             relief="flat",
@@ -138,7 +143,7 @@ class Descriptive(tk.Toplevel):
             text="Extract Data",
             command=self.open_extracted_data_page,
             fg="white",
-            bg="#6c0987",
+            bg="#38476e",
             font=("Verdana", 10, "bold"),
             padx=10,
             pady=8,
@@ -163,7 +168,7 @@ class Descriptive(tk.Toplevel):
             tk.Label(
                 self.grid_frame,
                 text=f"Group {col + 1}",
-                bg="#6c0987",
+                bg="#38476e",
                 fg="white",
                 font=("Verdana", 10, "bold"),
                 width=15,
@@ -213,7 +218,7 @@ class Descriptive(tk.Toplevel):
         tk.Label(
             self.grid_frame,
             text=f"Group {new_col + 1}",
-            bg="#6c0987",
+            bg="#38476e",
             fg="white",
             font=("Verdana", 10, "bold"),
             width=15,
@@ -272,7 +277,7 @@ class Descriptive(tk.Toplevel):
         win.geometry(f"{window_width}x{window_height}+{x}+{y}")
         win.configure(bg="white")
         # ---------------- TITLE ----------------
-        title_frame = tk.Frame(win, bg="#d871f5")
+        title_frame = tk.Frame(win, bg="#B9B0EB")
         title_frame.pack(fill="x")
 
         tk.Label(
@@ -280,18 +285,18 @@ class Descriptive(tk.Toplevel):
             text="Statistical Analysis",
             font=("Georgia", 28, "bold"),
             fg="white",
-            bg="#d871f5"
-        ).pack(pady=10)
-        tk.Label(title_frame, bg="#d871f5").pack(expand=True)
+            bg="#38476e",
+            pady=10
+        ).pack(pady=0, fill="x")
 
         # ---------------- HORIZONTAL SCROLL CONTAINER ----------------
         container = tk.Frame(win, bg="white")
         container.pack(fill="both", expand=True)
 
-        canvas = tk.Canvas(container, bg="#d871f5", highlightthickness=0)
+        canvas = tk.Canvas(container, bg="#B9B0EB", highlightthickness=0)
         h_scrollbar = tk.Scrollbar(container, orient="horizontal", command=canvas.xview)
 
-        scroll_frame = tk.Frame(canvas, bg="#d871f5")
+        scroll_frame = tk.Frame(canvas, bg="#B9B0EB")
 
         scroll_frame.bind(
             "<Configure>",
@@ -340,7 +345,7 @@ class Descriptive(tk.Toplevel):
             tk.Label(group_frame, text=f"Mode: {stats['mode']}", bg="white").pack(anchor="w", padx=20)
 
             # DISPERSION
-            tk.Label(group_frame, text="Measure of Central Tendency", bg="white", font=("Georgia", 12, "bold")).pack(anchor="w", padx=20)
+            tk.Label(group_frame, text="Measure of Dispersion", bg="white", font=("Georgia", 12, "bold")).pack(anchor="w", padx=20)
             tk.Label(group_frame, text=f"Range: {stats['range']}", bg="white").pack(anchor="w", padx=20)
             tk.Label(group_frame, text=f"Variance: {stats['variance']}", bg="white").pack(anchor="w", padx=20)
             tk.Label(group_frame, text=f"Std Dev: {stats['std_dev']}", bg="white").pack(anchor="w", padx=20)
@@ -375,17 +380,17 @@ class Descriptive(tk.Toplevel):
                 ).pack(anchor="w", padx=40)
 
         # ---------------- FOOTER ----------------
-        footer_frame = tk.Frame(win, bg="#d871f5")
+        footer_frame = tk.Frame(win, bg="#B9B0EB")
         footer_frame.pack(fill="x")
 
-        button_row = tk.Frame(footer_frame, bg="#d871f5")
+        button_row = tk.Frame(footer_frame, bg="#B9B0EB")
         button_row.pack(pady=10)
 
         tk.Button(
             button_row,
             text="Show Visualization",
             fg="white",
-            bg="#6c0987",
+            bg="#38476e",
             font=("Verdana", 10, "bold"),
             padx=20,
             pady=10,
@@ -396,7 +401,7 @@ class Descriptive(tk.Toplevel):
             button_row,
             text="BACK",
             fg="white",
-            bg="#6c0987",
+            bg="#38476e",
             font=("Verdana", 10, "bold"),
             padx=20,
             pady=10,
@@ -407,14 +412,14 @@ class Descriptive(tk.Toplevel):
             button_row,
             text="Export CSV",
             fg="white",
-            bg="#6c0987",
+            bg="#38476e",
             font=("Verdana", 10, "bold"),
             padx=20,
             pady=10,
             command=lambda: self.export_results_csv(data)
         ).pack(side="left", padx=8)
 
-        tk.Label(footer_frame, bg="#d871f5").pack(expand=True)
+        tk.Label(footer_frame, bg="#B9B0EB").pack(expand=True)
 
     def export_results_csv(self, data):
         file_path = filedialog.asksaveasfilename(
