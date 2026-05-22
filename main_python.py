@@ -2,6 +2,11 @@ import tkinter as tk
 import data_labs
 import stat_basic
 
+import pyglet
+import os
+
+pyglet.font.add_file(os.path.abspath("Safira-March.ttf"))
+
 def open_how_it_works():
     # Create the secondary window
     how_window = tk.Toplevel()
@@ -65,7 +70,7 @@ def open_how_it_works():
 def create_app():
     # --- Create main window ---
     root = tk.Tk()
-    root.title("Statistics Calculator") 
+    root.title("Statify - Statistics Calculator") 
 
     # Window size
     window_width = 1000
@@ -83,37 +88,40 @@ def create_app():
     root.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
     # --- UI Layout ---
-    nav_frame = tk.Frame(root, bg="#6c0987", height=60)
+    nav_frame = tk.Frame(root, bg="#38476e", height=60)
     nav_frame.pack(side="top", fill="x")
     nav_frame.pack_propagate(False)
 
   
-    tk.Label(nav_frame, text="Statistics Calc",font=("Georgia",10,"bold"),fg="white", bg="#6c0987", padx=20).pack(side="left")
+    tk.Label(nav_frame, text="Statify",font=("Georgia",10,"bold"),fg="white", bg="#38476e", padx=20).pack(side="left")
 
-    data_lab_btn = tk.Button(nav_frame, text="Data Lab", relief="flat",font=("Verdana",10,"bold"), fg="white", bg="#6c0987", command=lambda: data_labs.DataLabWindow(root))
+    data_lab_btn = tk.Button(nav_frame, text="Data Lab", relief="flat",font=("Verdana",10,"bold"), fg="white", bg="#38476e", command=lambda: data_labs.DataLabWindow(root))
     data_lab_btn.pack(side="right", padx=15)
 
-    data_lab_btn = tk.Button(nav_frame, text="Stats Basics", relief="flat",font=("Verdana",10,"bold"), fg="white", bg="#6c0987", command=lambda: stat_basic.StatBasic(root))
+    data_lab_btn = tk.Button(nav_frame, text="Stats Basics", relief="flat",font=("Verdana",10,"bold"), fg="white", bg="#38476e", command=lambda: stat_basic.StatBasic(root))
     data_lab_btn.pack(side="right", padx=15)
 
-    data_lab_btn = tk.Button(nav_frame, text="Home", relief="flat",font=("Verdana",10,"bold"), fg="white", bg="#6c0987")
+    data_lab_btn = tk.Button(nav_frame, text="Home", relief="flat",font=("Verdana",10,"bold"), fg="white", bg="#38476e")
     data_lab_btn.pack(side="right", padx=15)
 
-    main_content = tk.Frame(root, bg="#d871f5")
+    main_content = tk.Frame(root, bg="#B9B0EB")
     main_content.pack(expand=True, fill="both")
 
-    tk.Label(main_content, bg="#d871f5").pack(expand=True)
-    tk.Label(main_content, text="BSCoS 302's Special Project", font=("Times New Roman", 10, "bold", "italic"), fg="white", bg="#d871f5").pack() 
-    tk.Label(main_content, text="Statistics Calc", font=("Georgia", 50, "bold"), fg="white", bg="#d871f5").pack()
-    tk.Label(main_content, text="Instant insight from raw data", font=("Times New Roman", 10, "italic"), fg="white", bg="#d871f5").pack() 
+    tk.Label(main_content, bg="#B9B0EB").pack(pady=90,expand=True)
+    
+    tk.Label(main_content, text="Statify", font=("Safira March Personal Use Only", 65, "bold"), fg="white", bg="#B9B0EB").place(relx=0.5, rely=0.5, anchor="n", y=-140)
+    tk.Label(main_content, text="BSCoS 302's Special Project", font=("Times New Roman", 14, "bold", "italic"), fg="white", bg="#B9B0EB").place(relx=0.5, rely=0.5, anchor="n", y=-155)
+    tk.Label(main_content, text="Instant insight from raw data", font=("Times New Roman", 14, "italic"), fg="white", bg="#B9B0EB").place(relx=0.5, rely=0.5, anchor="n", y=-30)
+
+    tk.Label(main_content, bg="#B9B0EB").pack(pady=10)
     
     # The Trigger Link
-    how_link = tk.Label(main_content, text="How it Works", fg="#6c0987", bg="#d871f5", cursor="hand2")
-    how_link.pack(pady=20)
+    how_link = tk.Label(main_content, text="How it Works", fg="#38476e", bg="#B9B0EB", cursor="hand2")
+    how_link.pack(pady=5)
     how_link.bind("<Button-1>", lambda e: open_how_it_works())
 
-    tk.Button(main_content, text="Get Started",fg = "white",bg = "#6c0987",font=("Verdana",10,"bold"), padx=20, pady=10, command=lambda: data_labs.DataLabWindow(root)).pack()
-    tk.Label(main_content, bg="#d871f5").pack(expand=True)
+    tk.Button(main_content, text="Get Started",fg = "white",bg = "#38476e",font=("Verdana",10,"bold"), padx=20, pady=10, command=lambda: data_labs.DataLabWindow(root)).pack()
+    tk.Label(main_content, bg="#B9B0EB").pack(expand=True)
 
     root.mainloop()
 
