@@ -425,9 +425,9 @@ class Inferential(tk.Toplevel):
         '''return [{"group":1, "values":['1', '2', '3', '4', '5']},
                 {"group":2, "values":['50', '55', '65', '70', '80']}]''' # Preset for Pearson Correlation
         
-        return [{"group":1, "values":['200', '220', '240', '260', '280']},
+        '''return [{"group":1, "values":['200', '220', '240', '260', '280']},
                 {"group":2, "values":['300', '350', '400', '450', '500']},
-                {"group":3, "values":['100', '130', '170', '220', '230']}] # Preset for Confidence Intervals
+                {"group":3, "values":['100', '130', '170', '220', '230']}]''' # Preset for Confidence Intervals
         
         '''return [{"group":1, "values":['30', '40', '20']},
                 {"group":2, "values":['50', '30', '10']},
