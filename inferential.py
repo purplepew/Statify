@@ -5,6 +5,7 @@ import visualization
 
 import pyglet
 import os
+import scipy.stats
 from config import DEFAULT_GROUPS
 
 pyglet.font.add_file(os.path.abspath("Safira-March.ttf"))
@@ -158,7 +159,7 @@ class Inferential(tk.Toplevel):
 
         tk.Label(
             control_frame,
-            text="Level of Significance (alpha) in %:",
+            text="Alpha:",
             bg="#B9B0EB",
             font=("Georgia", 12)
         ).pack(side="left", padx=10)
@@ -173,6 +174,8 @@ class Inferential(tk.Toplevel):
 
         self.significance.pack(side="left", padx=5)
         self.significance.bind("<KeyRelease>", self._on_input_change, add="+")
+
+        self.significance.insert(0, "0.05")  # Default to 0.05
 
         self.anova_button = tk.Button(
             control_frame,
@@ -385,8 +388,8 @@ class Inferential(tk.Toplevel):
                 {"group":2, "values":['85', '88', '90']},
                 {"group":3, "values":['60', '65', '70']}]''' # Preset for ANOVA
         
-        return [{"group":1, "values":['1', '2', '3', '4', '5']},
-                {"group":2, "values":['50', '55', '65', '70', '80']}] # Preset for Pearson Correlation
+        '''return [{"group":1, "values":['1', '2', '3', '4', '5']},
+                {"group":2, "values":['50', '55', '65', '70', '80']}]''' # Preset for Pearson Correlation
 
         all_data = []
 
@@ -433,7 +436,7 @@ class Inferential(tk.Toplevel):
         # Get alpha or Level of Significance taken from User Input, default to 0.05 if invalid
         alpha = 0.05
         try:
-            alpha = (100 - float(self.significance.get())) / 100
+            alpha = float(self.significance.get())
         except:
             pass
 
@@ -494,7 +497,7 @@ class Inferential(tk.Toplevel):
         # Get alpha or Level of Significance taken from User Input, default to 0.05 if invalid
         alpha = 0.05
         try:
-            alpha = (100 - float(self.significance.get())) / 100
+            alpha = float(self.significance.get())
         except:
             pass
 
@@ -588,8 +591,7 @@ class Inferential(tk.Toplevel):
     def __f_critical_value(self, df_between, df_within, alpha):
         # Return the critical F value for given degrees of freedom and alpha.
         try:
-            from scipy.stats import f
-            return f.ppf(1 - alpha, df_between, df_within)
+            return scipy.stats.f.ppf(1 - alpha, df_between, df_within)
         except ImportError:
             f_table = {
                 (1, 10): {0.05: 4.9646, 0.01: 10.042},
@@ -603,8 +605,7 @@ class Inferential(tk.Toplevel):
         
     def __q_value(self, k, df_within, alpha):
         try:
-            from scipy.stats import studentized_range
-            return studentized_range.ppf(1 - alpha, k, df_within)
+            return scipy.stats.studentized_range.ppf(1 - alpha, k, df_within)
         except ImportError:
             q_table = {
                 (3, 10): {0.05: 3.77, 0.01: 5.34},
@@ -632,8 +633,7 @@ class Inferential(tk.Toplevel):
     
     def __t_critical_value(self, df, alpha):
         try:
-            from scipy.stats import t
-            return t.ppf(1 - alpha/2, df)
+            return scipy.stats.t.ppf(1 - alpha/2, df)
         except ImportError:
             t_table = {
                 1: {0.05: 12.706, 0.01: 63.657},
@@ -649,8 +649,7 @@ class Inferential(tk.Toplevel):
         
     def __p_value_from_t(self, t_value, df):
         try:
-            from scipy.stats import t
-            p_value = (1 - t.cdf(abs(t_value), df)) * 2
+            p_value = (1 - scipy.stats.t.cdf(abs(t_value), df)) * 2
             return p_value
         except ImportError:
             return None
@@ -841,12 +840,11 @@ class Inferential(tk.Toplevel):
         ).pack(pady=(5,0))
 
         # Compare p-value with alpha to determine significance
-        alpha = self.significance.get()
-        alpha_val = 1 - (float(alpha) / 100)
-        p_significance_text = "Reject H₀" if results['p_value'] < alpha_val else "Fail to Reject H₀"
+        alpha = float(self.significance.get())
+        p_significance_text = "Reject H₀" if results['p_value'] < alpha else "Fail to Reject H₀"
         tk.Label(
             result_frame,
-            text=f"p-value: {results['p_value']:.4f} | α: {(100-float(alpha))/100.0} → {p_significance_text}",
+            text=f"p-value: {results['p_value']:.4f} | α: {float(alpha)} → {p_significance_text}",
             bg="#B9B0EB",
             font=("Georgia", 12, "italic")
         ).pack(pady=(0,5))
