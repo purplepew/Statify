@@ -6,42 +6,12 @@ import statistics
 from collections import Counter
 import visualization
 from config import DEFAULT_GROUPS
+import stat_basic
 
 import pyglet
 import os
 
 pyglet.font.add_file(os.path.abspath("Safira-March.ttf"))
-
-
-class Descriptive(tk.Toplevel):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.title("Data Lab")
-
-        # Window size and centering
-        window_width = 1000
-        window_height = 600
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        x = int((screen_width / 2) - (window_width / 2))
-        y = int((screen_height / 2) - (window_height / 2))
-        self.geometry(f"{window_width}x{window_height}+{x}+{y}")
-
-        self.configure(bg="#B9B0EB")
-
-        self.groups = []
-
-        # --- Top Navigation ---
-        nav_frame = tk.Frame(self, bg="#38476e", height=60)
-        nav_frame.pack(side="top", fill="x")
-        nav_frame.pack_propagate(False)
-
-        tk.Label(nav_frame, text="Statify",font=("Safira March Personal Use Only",10,"bold"),fg="white", bg="#38476e", padx=20).pack(side="left")
-import tkinter as tk
-from tkinter import ttk
-import statistics
-from collections import Counter
-import visualization
 
 
 class Descriptive(tk.Toplevel):

@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import statistics
+import stat_basic
 import visualization
 
 import pyglet
@@ -67,7 +68,8 @@ class Inferential(tk.Toplevel):
             bg="#38476e",
             fg="white",
             relief="flat",
-            font=("Verdana", 10, "bold")
+            font=("Verdana", 10, "bold"),
+            command=lambda: stat_basic.StatBasic(self)
         ).pack(side="right", padx=15)
 
         tk.Button(
