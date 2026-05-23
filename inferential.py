@@ -84,14 +84,18 @@ class Inferential(tk.Toplevel):
         self.workspace = tk.Frame(self, bg="#B9B0EB")
         self.workspace.pack(fill="both", expand=True, padx=20, pady=20)
 
+        # Top frame for canvas and vertical scrollbar
+        top_frame = tk.Frame(self.workspace, bg="#B9B0EB")
+        top_frame.pack(fill="both", expand=True)
+
         self.canvas = tk.Canvas(
-            self.workspace,
+            top_frame,
             bg="#B9B0EB",
             highlightthickness=0
         )
 
         self.v_scroll = ttk.Scrollbar(
-            self.workspace,
+            top_frame,
             orient="vertical",
             command=self.canvas.yview
         )

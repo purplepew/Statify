@@ -87,21 +87,47 @@ class Descriptive(tk.Toplevel):
         self.workspace = tk.Frame(self, bg="#B9B0EB")
         self.workspace.pack(fill="both", expand=True, padx=20, pady=20)
 
-        self.canvas = tk.Canvas(self.workspace, bg="#B9B0EB", highlightthickness=0)
+        # Top frame for canvas and vertical scrollbar
+        top_frame = tk.Frame(self.workspace, bg="#B9B0EB")
+        top_frame.pack(fill="both", expand=True)
 
-        self.v_scroll = ttk.Scrollbar(self.workspace, orient="vertical", command=self.canvas.yview)
-        self.h_scroll = ttk.Scrollbar(self.workspace, orient="horizontal", command=self.canvas.xview)
+        self.canvas = tk.Canvas(
+            top_frame,
+            bg="#B9B0EB",
+            highlightthickness=0
+        )
+
+        self.v_scroll = ttk.Scrollbar(
+            top_frame,
+            orient="vertical",
+            command=self.canvas.yview
+        )
+
+        self.h_scroll = ttk.Scrollbar(
+            self.workspace,
+            orient="horizontal",
+            command=self.canvas.xview
+        )
 
         self.grid_frame = tk.Frame(self.canvas, bg="white")
 
         self.grid_frame.bind(
             "<Configure>",
-            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+            lambda e: self.canvas.configure(
+                scrollregion=self.canvas.bbox("all")
+            )
         )
 
-        self.canvas.create_window((0, 0), window=self.grid_frame, anchor="nw")
+        self.canvas.create_window(
+            (0, 0),
+            window=self.grid_frame,
+            anchor="nw"
+        )
 
-        self.canvas.configure(yscrollcommand=self.v_scroll.set, xscrollcommand=self.h_scroll.set)
+        self.canvas.configure(
+            yscrollcommand=self.v_scroll.set,
+            xscrollcommand=self.h_scroll.set
+        )
 
         self.canvas.pack(side="left", fill="both", expand=True)
         self.v_scroll.pack(side="right", fill="y")
