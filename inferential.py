@@ -20,7 +20,7 @@ class Inferential(tk.Toplevel):
 
         # ---------------- WINDOW ----------------
         window_width = 1000
-        window_height = 700
+        window_height = 600
 
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
@@ -177,8 +177,12 @@ class Inferential(tk.Toplevel):
 
         self.significance.insert(0, "0.05")  # Default to 0.05
 
+        # Container for all extract buttons located below control_frame
+        button_frame = tk.Frame(self, bg="#B9B0EB")
+        button_frame.pack(pady=10)
+
         self.anova_button = tk.Button(
-            control_frame,
+            button_frame,
             text="Extract Data (ANOVA)",
             command=self.anova_analysis,
             fg="white",
@@ -193,7 +197,7 @@ class Inferential(tk.Toplevel):
         self.extract_buttons.append(self.anova_button)
 
         self.correlation_button = tk.Button(
-            control_frame,
+            button_frame,
             text="Extract Data (Correlation)",
             command=self.correlation_analysis,
             fg="white",
@@ -208,7 +212,7 @@ class Inferential(tk.Toplevel):
         self.extract_buttons.append(self.correlation_button)
 
         self.confidence_button = tk.Button(
-            control_frame,
+            button_frame,
             text="Extract Data (Confidence)",
             command=self.confidence_analysis,
             fg="white",
@@ -221,6 +225,21 @@ class Inferential(tk.Toplevel):
         )
         self.confidence_button.pack(side="left", padx=5)
         self.extract_buttons.append(self.confidence_button)
+
+        self.chisquare_button = tk.Button(
+            button_frame,
+            text="Extract Data (Chi-Square)",
+            command=self.chisquare_analysis,
+            fg="white",
+            bg="#38476e",
+            font=("Verdana", 10, "bold"),
+            padx=10,
+            pady=8,
+            relief="flat",
+            state="disabled"
+        )
+        self.chisquare_button.pack(side="left", padx=5)
+        self.extract_buttons.append(self.chisquare_button)
 
         self.update_extract_button_state()
 
@@ -406,9 +425,13 @@ class Inferential(tk.Toplevel):
         '''return [{"group":1, "values":['1', '2', '3', '4', '5']},
                 {"group":2, "values":['50', '55', '65', '70', '80']}]''' # Preset for Pearson Correlation
         
-        '''return [{"group":1, "values":['200', '220', '240', '260', '280']},
+        return [{"group":1, "values":['200', '220', '240', '260', '280']},
                 {"group":2, "values":['300', '350', '400', '450', '500']},
-                {"group":3, "values":['100', '130', '170', '220', '230']}]''' # Preset for Confidence Intervals
+                {"group":3, "values":['100', '130', '170', '220', '230']}] # Preset for Confidence Intervals
+        
+        '''return [{"group":1, "values":['30', '40', '20']},
+                {"group":2, "values":['50', '30', '10']},
+                {"group":3, "values":['20', '10', '10']}]''' # Preset for Chi-Square Test
 
         all_data = []
 
@@ -556,7 +579,7 @@ class Inferential(tk.Toplevel):
         except:
             pass
         
-        confidence_level = (alpha)/2
+        confidence_level = alpha
 
         sample_means = []
         std_devs = []
@@ -612,6 +635,75 @@ class Inferential(tk.Toplevel):
         }
 
         self.open_extracted_confidence_data_page()
+
+    # =========================================================
+    # CHI SQUARE TEST
+    # =========================================================
+
+    def chisquare_analysis(self):
+        data = self.get_all_data()
+
+        alpha = 0.05
+        try:
+            alpha = float(self.significance.get())
+        except:
+            pass
+
+        group_totals = []
+        for group in data:
+            nums = []
+            for v in group["values"]:
+                try:
+                    nums.append(float(v))
+                except:
+                    pass
+            group_totals.append(sum(nums))
+
+        row_totals = []
+        for i in range(len(data[0]["values"])):
+            row_sum = 0
+            for group in data:
+                try:
+                    row_sum += float(group["values"][i])
+                except:
+                    pass
+            row_totals.append(row_sum)
+
+        grand_total = sum(group_totals)
+
+        square_list = []
+        for group_index in range(len(group_totals)):
+            for row_index in range(len(row_totals)):
+                expected = (group_totals[group_index] * row_totals[row_index]) / grand_total if grand_total > 0 else 0
+                observed = data[group_index]["values"][row_index] if row_index < len(data[group_index]["values"]) else 0
+                try:
+                    observed = float(data[group_index]["values"][row_index])
+                except:
+                    pass
+
+                chisquare_component = ((observed - expected) ** 2) / expected if expected > 0 else 0
+                square_list.append(chisquare_component)
+
+                print(f"Group {group_index + 1}, Row {row_index + 1}: Observed={observed}, Expected={expected:.2f}, Component={chisquare_component:.4f}")
+
+        print(square_list)
+        chisquare_statistic = sum(square_list)
+
+        df = (len(group_totals) - 1) * (len(row_totals) - 1)
+        critical_chisquare = scipy.stats.chi2.ppf(1 - alpha, df) if df > 0 else 0
+        p_value = self.__p_value_from_chisquare(df, alpha)
+
+        significant = critical_chisquare is not None and chisquare_statistic > critical_chisquare
+
+        self.chisquare_results = {
+            "chisquare_statistic": chisquare_statistic,
+            "df": df,
+            "critical_chisquare": critical_chisquare,
+            "p_value": p_value,
+            "significant": significant
+        }
+
+        self.open_extracted_chisquare_data_page()
 
     # =========================================================
     # COMPUTATIONS
@@ -742,19 +834,22 @@ class Inferential(tk.Toplevel):
             return p_value
         except ImportError:
             return None
+        
+    def __p_value_from_chisquare(self, df, alpha):
+        try:
+            p_value = 1 - scipy.stats.chi2.cdf(df, alpha)
+            return p_value
+        except ImportError:
+            return None
 
     # =========================================================
     # RESULT WINDOW
     # =========================================================
 
     def open_extracted_anova_data_page(self):
-
         win = tk.Toplevel(self)
-
         win.title("Inferential Results (ANOVA)")
-
         win.geometry("700x500")
-
         win.configure(bg="#B9B0EB")
 
         tk.Label(
@@ -838,11 +933,42 @@ class Inferential(tk.Toplevel):
                 ).pack(anchor="w", pady=2)
         else:
             tk.Label(comparison_frame_inner, text="No pairwise comparisons available.", bg="#B9B0EB").pack(anchor="w", pady=4)
+        
+        # ---------------- FOOTER ----------------
+        footer_frame = tk.Frame(win, bg="#B9B0EB")
+        footer_frame.pack(fill="x")
+
+        button_row = tk.Frame(footer_frame, bg="#B9B0EB")
+        button_row.pack(pady=10)
+
+        tk.Button(
+            button_row,
+            text="BACK",
+            fg="white",
+            bg="#38476e",
+            font=("Verdana", 10, "bold"),
+            padx=20,
+            pady=10,
+            command=win.destroy
+        ).pack(side="left", padx=8)
+
+        tk.Button(
+            button_row,
+            text="Export CSV",
+            fg="white",
+            bg="#38476e",
+            font=("Verdana", 10, "bold"),
+            padx=20,
+            pady=10,
+            command=lambda: self.export_results_csv(results, "anova_results.csv")
+        ).pack(side="left", padx=8)
+
+        tk.Label(footer_frame, bg="#B9B0EB").pack(expand=True)
 
     def open_extracted_correlation_data_page(self):
         win = tk.Toplevel(self)
         win.title("Inferential Results (Correlation)")
-        win.geometry("700x550")
+        win.geometry("700x650")
         win.configure(bg="#B9B0EB")
 
         tk.Label(
@@ -867,18 +993,18 @@ class Inferential(tk.Toplevel):
         for col, header in enumerate(headers):
             tk.Label(table_frame, text=header, bg="#38476e", fg="white", font=("Verdana", 10, "bold"), width=12).grid(row=0, column=col, padx=1, pady=1)        
         for i in range(len(results['x_values'])):
-            tk.Label(table_frame, text=f"{results['x_values'][i]:.2f}", bg="#B9B0EB", font=("Georgia", 12)).grid(row=i+1, column=0, padx=1, pady=1)
-            tk.Label(table_frame, text=f"{results['y_values'][i]:.2f}", bg="#B9B0EB", font=("Georgia", 12)).grid(row=i+1, column=1, padx=1, pady=1)
-            tk.Label(table_frame, text=f"{results['xsquared'][i]:.2f}", bg="#B9B0EB", font=("Georgia", 12)).grid(row=i+1, column=2, padx=1, pady=1)
-            tk.Label(table_frame, text=f"{results['ysquared'][i]:.2f}", bg="#B9B0EB", font=("Georgia", 12)).grid(row=i+1, column=3, padx=1, pady=1)
-            tk.Label(table_frame, text=f"{results['xy'][i]:.2f}", bg="#B9B0EB", font=("Georgia", 12)).grid(row=i+1, column=4, padx=1, pady=1)
+            tk.Label(table_frame, text=f"{results['x_values'][i]:.2f}", bg="white", font=("Georgia", 12), width=12).grid(row=i+1, column=0, padx=1, pady=1)
+            tk.Label(table_frame, text=f"{results['y_values'][i]:.2f}", bg="white", font=("Georgia", 12), width=12).grid(row=i+1, column=1, padx=1, pady=1)
+            tk.Label(table_frame, text=f"{results['xsquared'][i]:.2f}", bg="white", font=("Georgia", 12), width=12).grid(row=i+1, column=2, padx=1, pady=1)
+            tk.Label(table_frame, text=f"{results['ysquared'][i]:.2f}", bg="white", font=("Georgia", 12), width=12).grid(row=i+1, column=3, padx=1, pady=1)
+            tk.Label(table_frame, text=f"{results['xy'][i]:.2f}", bg="white", font=("Georgia", 12), width=12).grid(row=i+1, column=4, padx=1, pady=1)
 
         tk.Label(table_frame, text="─" * 50, bg="#B9B0EB").grid(row=len(results['x_values']) + 1, column=0, columnspan=5, pady=(4, 4))
-        tk.Label(table_frame, text=f"ΣX: {results['sum_x']:.2f}", bg="#B9B0EB", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=0, padx=1, pady=1)
-        tk.Label(table_frame, text=f"ΣY: {results['sum_y']:.2f}", bg="#B9B0EB", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=1, padx=1, pady=1)
-        tk.Label(table_frame, text=f"ΣX²: {results['sum_xsquared']:.2f}", bg="#B9B0EB", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=2, padx=1, pady=1)
-        tk.Label(table_frame, text=f"ΣY²: {results['sum_ysquared']:.2f}", bg="#B9B0EB", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=3, padx=1, pady=1)
-        tk.Label(table_frame, text=f"ΣXY: {results['sum_xy']:.2f}", bg="#B9B0EB", font=("Georgia", 12, "bold")).grid(row=len(results['x_values']) + 2, column=4, padx=1, pady=1)
+        tk.Label(table_frame, text=f"ΣX: {results['sum_x']:.2f}", bg="white", font=("Georgia", 10, "bold"), width=12).grid(row=len(results['x_values']) + 2, column=0, padx=1, pady=1)
+        tk.Label(table_frame, text=f"ΣY: {results['sum_y']:.2f}", bg="white", font=("Georgia", 10, "bold"), width=12).grid(row=len(results['x_values']) + 2, column=1, padx=1, pady=1)
+        tk.Label(table_frame, text=f"ΣX²: {results['sum_xsquared']:.2f}", bg="white", font=("Georgia", 10, "bold"), width=12).grid(row=len(results['x_values']) + 2, column=2, padx=1, pady=1)
+        tk.Label(table_frame, text=f"ΣY²: {results['sum_ysquared']:.2f}", bg="white", font=("Georgia", 10, "bold"), width=12).grid(row=len(results['x_values']) + 2, column=3, padx=1, pady=1)
+        tk.Label(table_frame, text=f"ΣXY: {results['sum_xy']:.2f}", bg="white", font=("Georgia", 10, "bold"), width=12).grid(row=len(results['x_values']) + 2, column=4, padx=1, pady=1)
 
         tk.Label(
             result_frame,
@@ -939,6 +1065,7 @@ class Inferential(tk.Toplevel):
         ).pack(pady=(0,5))
 
         # Button at footer to display the scatter plot of the data points
+
         tk.Button(
             result_frame,
             text="Show Scatter Plot",
@@ -950,6 +1077,37 @@ class Inferential(tk.Toplevel):
             pady=8,
             relief="flat"
         ).pack(pady=(20, 0))
+
+        # ---------------- FOOTER ----------------
+        footer_frame = tk.Frame(win, bg="#B9B0EB")
+        footer_frame.pack(fill="x")
+
+        button_row = tk.Frame(footer_frame, bg="#B9B0EB")
+        button_row.pack(pady=10)
+
+        tk.Button(
+            button_row,
+            text="BACK",
+            fg="white",
+            bg="#38476e",
+            font=("Verdana", 10, "bold"),
+            padx=20,
+            pady=10,
+            command=win.destroy
+        ).pack(side="left", padx=8)
+
+        tk.Button(
+            button_row,
+            text="Export CSV",
+            fg="white",
+            bg="#38476e",
+            font=("Verdana", 10, "bold"),
+            padx=20,
+            pady=10,
+            command=lambda: self.export_results_csv(results, "correlation_results.csv")
+        ).pack(side="left", padx=8)
+
+        tk.Label(footer_frame, bg="#B9B0EB").pack(expand=True)
 
     def open_extracted_confidence_data_page(self):
         win = tk.Toplevel(self)
@@ -969,7 +1127,7 @@ class Inferential(tk.Toplevel):
         tk.Label(
             title_frame,
             text="Confidence Interval Analysis",
-            font=("Georgia", 28, "bold"),
+            font=("Safira March Personal Use Only", 28, "bold"),
             fg="white",
             bg="#38476e",
             pady=10
@@ -1019,7 +1177,13 @@ class Inferential(tk.Toplevel):
                 bg="white", pady=10
             ).pack(anchor="center")
 
-            # SAMPLE MEAN, STD DEV, T SCORE
+            tk.Label(
+                group_frame,
+                text=f"Sample Size: {data['group_dfs'][i] + 1}",
+                bg="white",
+                font=("Georgia", 12)
+            ).pack(anchor="w", padx=10)
+
             tk.Label(
                 group_frame,
                 text=f"Sample Mean: {data['sample_means'][i]:.2f}",
@@ -1029,7 +1193,7 @@ class Inferential(tk.Toplevel):
 
             tk.Label(
                 group_frame,
-                text=f"Standard Deviation: {data['std_devs'][i]:.2f}",
+                text=f"STDEV/Standard Error: {data['std_devs'][i]:.2f}",
                 bg="white",
                 font=("Georgia", 12)
             ).pack(anchor="w", padx=10)
@@ -1044,7 +1208,7 @@ class Inferential(tk.Toplevel):
             # CONFIDENCE INTERVAL AND RANGES
             tk.Label(
                 group_frame,
-                text=f"Confidence Interval: {data['t_distributions'][i]:.2f}",
+                text=f"Margin of Error: {data['t_distributions'][i]:.2f}",
                 bg="white",
                 font=("Georgia", 12)
             ).pack(anchor="w", padx=10)
@@ -1083,13 +1247,254 @@ class Inferential(tk.Toplevel):
             font=("Verdana", 10, "bold"),
             padx=20,
             pady=10,
-            command=lambda: self.export_results_csv(data)
+            command=lambda: self.export_results_csv(data, "confidence_results.csv")
         ).pack(side="left", padx=8)
 
         tk.Label(footer_frame, bg="#B9B0EB").pack(expand=True)
 
+    def open_extracted_chisquare_data_page(self):
+        calculated_height = 400 + len(self.get_all_data()[0]["values"]) * 50
 
+        win = tk.Toplevel(self)
+        win.title("Chi-Square Results")
+        win.geometry(f"700x{calculated_height}")
+        win.configure(bg="#B9B0EB")
 
+        tk.Label(
+            win,
+            text="Chi-Square Results",
+            font=("Safira March Personal Use Only", 24, "bold"),
+            bg="#38476e",
+            fg="white",
+            pady=15
+        ).pack(fill="x")
+
+        results = self.chisquare_results
+
+        result_frame = tk.Frame(win, bg="#B9B0EB")
+
+        result_frame.pack(expand=True)
+
+        input_data = self.get_all_data()
+
+        # Display a table of input data with group totals, row totals, and grand total
+        table_frame = tk.Frame(result_frame, bg="#B9B0EB")
+        table_frame.pack(pady=15)
+
+        # Calculate totals
+        group_totals = []
+        for group in input_data:
+            nums = []
+            for v in group["values"]:
+                try:
+                    nums.append(float(v))
+                except:
+                    pass
+            group_totals.append(sum(nums))
+
+        row_totals = []
+        if input_data and input_data[0]["values"]:
+            num_rows = len(input_data[0]["values"])
+            for i in range(num_rows):
+                row_sum = 0
+                for group in input_data:
+                    try:
+                        row_sum += float(group["values"][i])
+                    except:
+                        pass
+                row_totals.append(row_sum)
+
+        grand_total = sum(group_totals)
+
+        # Header row - Row Number label
+        tk.Label(
+            table_frame,
+            text="Row #",
+            bg="#38476e",
+            fg="white",
+            font=("Verdana", 10, "bold"),
+            width=12,
+            pady=5
+        ).grid(row=0, column=0, padx=2, pady=2)
+
+        # Header row (Group 1, Group 2, etc. + Row Total)
+        for col in range(len(input_data)):
+            tk.Label(
+                table_frame,
+                text=f"Group {col + 1}",
+                bg="#38476e",
+                fg="white",
+                font=("Verdana", 10, "bold"),
+                width=12,
+                pady=5
+            ).grid(row=0, column=col + 1, padx=2, pady=2)
+        
+        tk.Label(
+            table_frame,
+            text="Row Total",
+            bg="#38476e",
+            fg="white",
+            font=("Verdana", 10, "bold"),
+            width=12,
+            pady=5
+        ).grid(row=0, column=len(input_data) + 1, padx=2, pady=2)
+
+        # Data rows
+        for row_idx in range(len(row_totals)):
+            # Row number column
+            tk.Label(
+                table_frame,
+                text=f"Row {row_idx + 1}",
+                bg="#38476e",
+                fg="white",
+                font=("Verdana", 10, "bold"),
+                width=12,
+                pady=3
+            ).grid(row=row_idx + 1, column=0, padx=2, pady=2)
+            
+            for col_idx in range(len(input_data)):
+                value = input_data[col_idx]["values"][row_idx] if row_idx < len(input_data[col_idx]["values"]) else "0"
+                tk.Label(
+                    table_frame,
+                    text=str(value),
+                    bg="white",
+                    font=("Verdana", 10, "bold"),
+                    width=12,
+                    pady=3
+                ).grid(row=row_idx + 1, column=col_idx + 1, padx=2, pady=2)
+            
+            # Row total column
+            tk.Label(
+                table_frame,
+                text=f"{row_totals[row_idx]:.0f}",
+                bg="white",
+                fg="#38476e",
+                font=("Verdana", 10, "bold"),
+                width=12,
+                pady=3
+            ).grid(row=row_idx + 1, column=len(input_data) + 1, padx=2, pady=2)
+
+        # Column totals row
+        last_row = len(row_totals) + 1
+        tk.Label(
+            table_frame,
+            text="Column Total",
+            bg="#38476e",
+            fg="white",
+            font=("Verdana", 10, "bold"),
+            width=12
+        ).grid(row=last_row, column=0, padx=2, pady=2)
+        
+        for col_idx in range(len(input_data)):
+            tk.Label(
+                table_frame,
+                text=f"{group_totals[col_idx]:.0f}",
+                bg="white",
+                fg="#38476e",
+                font=("Verdana", 10, "bold"),
+                width=12,
+                pady=3
+            ).grid(row=last_row, column=col_idx + 1, padx=2, pady=2)
+        
+        # Grand total
+        tk.Label(
+            table_frame,
+            text=f"{grand_total:.0f}",
+            bg="#38476e",
+            fg="white",
+            font=("Verdana", 10, "bold"),
+            width=12,
+            pady=3
+        ).grid(row=last_row, column=len(input_data) + 1, padx=2, pady=2)
+
+        tk.Label(
+            result_frame,
+            text=f"Chi-Square Value: {results['chisquare_statistic']:.2f}",
+            bg="#B9B0EB",
+            font=("Georgia", 14)
+        ).pack(pady=10)
+
+        crit_text = (
+            f"{results['critical_chisquare']:.2f}"
+            if results['critical_chisquare'] is not None
+            else "N/A"
+        )
+
+        tk.Label(
+            result_frame,
+            text=f"Critical Chi-Square: {crit_text}",
+            bg="#B9B0EB",
+            font=("Georgia", 14)
+        ).pack(pady=10)
+
+        tk.Label(
+            result_frame,
+            text=f"p-value: {results['p_value']:.4f}",
+            bg="#B9B0EB",
+            font=("Georgia", 14)
+        ).pack(pady=10)
+
+        tk.Label(
+            result_frame,
+            text=f"Chi-Square Statistic: {results['chisquare_statistic']:.2f} | Critical Value: {crit_text} → {'Reject H0' if results['significant'] else 'Fail to Reject H0'}",
+            bg="#B9B0EB",
+            font=("Georgia", 12, "italic")
+        ).pack(pady=(5, 0))
+
+        tk.Label(
+            result_frame,
+            text=f"p-value: {results['p_value']:.4f} | α: {float(self.significance.get())} → {'Reject H0' if results['p_value'] < float(self.significance.get()) else 'Fail to Reject H0'}",
+            bg="#B9B0EB",
+            font=("Georgia", 12, "italic")
+        ).pack(pady=(0, 10))
+
+        decision = (
+            "Reject H0"
+            if results['significant']
+            else "Fail to Reject H0"
+        )
+
+        tk.Label(
+            result_frame,
+            text=f"Decision: {decision}",
+            bg="#B9B0EB",
+            fg="#38476e",
+            font=("Georgia", 16, "bold")
+        ).pack(pady=10)
+
+        result_frame2 = tk.Frame(win, bg="#B9B0EB")
+        result_frame2.pack(fill="x", expand=True)
+
+        # ---------------- FOOTER ----------------
+        footer_frame = tk.Frame(win, bg="#B9B0EB")
+        footer_frame.pack(fill="x")
+
+        button_row = tk.Frame(footer_frame, bg="#B9B0EB")
+        button_row.pack(pady=10)
+
+        tk.Button(
+            button_row,
+            text="BACK",
+            fg="white",
+            bg="#38476e",
+            font=("Verdana", 10, "bold"),
+            padx=20,
+            pady=10,
+            command=win.destroy
+        ).pack(side="left", padx=8)
+
+        tk.Button(
+            button_row,
+            text="Export CSV",
+            fg="white",
+            bg="#38476e",
+            font=("Verdana", 10, "bold"),
+            padx=20,
+            pady=10,
+            command=lambda: self.export_results_csv(results, "chisquare_results.csv")
+        ).pack(side="left", padx=8)
+
+        tk.Label(footer_frame, bg="#B9B0EB").pack(expand=True)
 
 if __name__ == "__main__":
 
