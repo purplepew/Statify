@@ -207,6 +207,21 @@ class Inferential(tk.Toplevel):
         self.correlation_button.pack(side="left", padx=5)
         self.extract_buttons.append(self.correlation_button)
 
+        self.confidence_button = tk.Button(
+            control_frame,
+            text="Extract Data (Confidence)",
+            command=self.confidence_analysis,
+            fg="white",
+            bg="#38476e",
+            font=("Verdana", 10, "bold"),
+            padx=10,
+            pady=8,
+            relief="flat",
+            state="disabled"
+        )
+        self.confidence_button.pack(side="left", padx=5)
+        self.extract_buttons.append(self.confidence_button)
+
         self.update_extract_button_state()
 
         self.parent = parent
@@ -390,6 +405,10 @@ class Inferential(tk.Toplevel):
         
         '''return [{"group":1, "values":['1', '2', '3', '4', '5']},
                 {"group":2, "values":['50', '55', '65', '70', '80']}]''' # Preset for Pearson Correlation
+        
+        return [{"group":1, "values":['200', '220', '240', '260', '280']},
+                {"group":2, "values":['300', '350', '400', '450', '500']},
+                {"group":3, "values":['100', '130', '170', '220', '230']}] # Preset for Confidence Intervals
 
         all_data = []
 
@@ -523,6 +542,76 @@ class Inferential(tk.Toplevel):
             "p_value": p_value
         }
         self.open_extracted_correlation_data_page()
+
+    # =========================================================
+    # CONFIDENCE INTERVALS
+    # =========================================================
+
+    def confidence_analysis(self):
+        data = self.get_all_data()
+
+        alpha = 0.05
+        try:
+            alpha = float(self.significance.get())
+        except:
+            pass
+        
+        confidence_level = (alpha)/2
+
+        sample_means = []
+        std_devs = []
+        group_dfs = []
+        for group in data:
+            nums = []
+            for v in group["values"]:
+                try:
+                    nums.append(float(v))
+                except:
+                    pass
+            if len(nums) > 1:
+                std_devs.append(statistics.stdev(nums))
+            else:
+                std_devs.append(0)
+
+            if len(nums) > 0:
+                sample_means.append(statistics.mean(nums))
+            else:
+                sample_means.append(0)
+
+            group_dfs.append(len(nums) - 1)
+
+        t_scores = []
+        for df in group_dfs:
+            t_score = self.__t_critical_value(df, confidence_level)
+            t_scores.append(t_score)
+
+        t_distributions = []
+        t_ranges = []
+        for i, group in enumerate(data):
+            nums = []
+            for v in group["values"]:
+                try:
+                    nums.append(float(v))
+                except:
+                    pass
+            std_over_sqrt = std_devs[i] / (len(nums) ** 0.5) if len(nums) > 0 else 0
+            t_dist = t_scores[i] * std_over_sqrt
+
+            t_lower = sample_means[i] - t_dist
+            t_higher = sample_means[i] + t_dist
+            t_distributions.append(t_dist)
+            t_ranges.append((t_lower, t_higher))
+
+        self.confidence_results = {
+            "sample_means": sample_means,
+            "std_devs": std_devs,
+            "group_dfs": group_dfs,
+            "t_scores": t_scores,
+            "t_distributions": t_distributions,
+            "t_ranges": t_ranges
+        }
+
+        self.open_extracted_confidence_data_page()
 
     # =========================================================
     # COMPUTATIONS
@@ -861,6 +950,145 @@ class Inferential(tk.Toplevel):
             pady=8,
             relief="flat"
         ).pack(pady=(20, 0))
+
+    def open_extracted_confidence_data_page(self):
+        win = tk.Toplevel(self)
+        win.title("Confidence Interval Results")
+        window_width = 1000
+        window_height = 600
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = int((screen_width / 2) - (window_width / 2))
+        y = int((screen_height / 2) - (window_height / 2))
+        win.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        win.configure(bg="white")
+        # ---------------- TITLE ----------------
+        title_frame = tk.Frame(win, bg="#B9B0EB")
+        title_frame.pack(fill="x")
+
+        tk.Label(
+            title_frame,
+            text="Confidence Interval Analysis",
+            font=("Georgia", 28, "bold"),
+            fg="white",
+            bg="#38476e",
+            pady=10
+        ).pack(pady=0, fill="x")
+
+        # ---------------- HORIZONTAL SCROLL CONTAINER ----------------
+        container = tk.Frame(win, bg="white")
+        container.pack(fill="both", expand=True)
+
+        canvas = tk.Canvas(container, bg="#B9B0EB", highlightthickness=0)
+        h_scrollbar = tk.Scrollbar(container, orient="horizontal", command=canvas.xview)
+
+        scroll_frame = tk.Frame(canvas, bg="#B9B0EB")
+
+        scroll_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
+        canvas.configure(xscrollcommand=h_scrollbar.set)
+
+        canvas.pack(side="top", fill="both", expand=True)
+        h_scrollbar.pack(side="bottom", fill="x")
+
+        data = self.confidence_results
+
+        # ---------------- GROUP CARDS ----------------
+        for i in range(len(data["sample_means"])):
+
+            # GROUP FRAME (300x600 CARD)
+            group_frame = tk.Frame(
+                scroll_frame,
+                bg="white",
+                width=300,
+                height=380,
+                highlightbackground="gray",
+                highlightthickness=1
+            )
+            group_frame.pack(side="left", padx=5, pady=5)
+            group_frame.pack_propagate(False)
+
+            tk.Label(
+                group_frame,
+                text=f"Group {i + 1}",
+                font=("Georgia", 18, "bold"),
+                bg="white", pady=10
+            ).pack(anchor="center")
+
+            # SAMPLE MEAN, STD DEV, T SCORE
+            tk.Label(
+                group_frame,
+                text=f"Sample Mean: {data['sample_means'][i]:.2f}",
+                bg="white",
+                font=("Georgia", 12)
+            ).pack(anchor="w", padx=10)
+
+            tk.Label(
+                group_frame,
+                text=f"Standard Deviation: {data['std_devs'][i]:.2f}",
+                bg="white",
+                font=("Georgia", 12)
+            ).pack(anchor="w", padx=10)
+
+            tk.Label(
+                group_frame,
+                text=f"T-Score: {data['t_scores'][i]:.2f}",
+                bg="white",
+                font=("Georgia", 12)
+            ).pack(anchor="w", padx=10)
+
+            # CONFIDENCE INTERVAL AND RANGES
+            tk.Label(
+                group_frame,
+                text=f"Confidence Interval: {data['t_distributions'][i]:.2f}",
+                bg="white",
+                font=("Georgia", 12)
+            ).pack(anchor="w", padx=10)
+
+            tk.Label(
+                group_frame,
+                text=f"{data['t_ranges'][i][0]:.2f} - {data['t_ranges'][i][1]:.2f}",
+                bg="white",
+                fg="#38476e",
+                font=("Georgia", 16, "bold")
+            ).pack(anchor="w", padx=10)
+
+        # ---------------- FOOTER ----------------
+        footer_frame = tk.Frame(win, bg="#B9B0EB")
+        footer_frame.pack(fill="x")
+
+        button_row = tk.Frame(footer_frame, bg="#B9B0EB")
+        button_row.pack(pady=10)
+
+        tk.Button(
+            button_row,
+            text="BACK",
+            fg="white",
+            bg="#38476e",
+            font=("Verdana", 10, "bold"),
+            padx=20,
+            pady=10,
+            command=win.destroy
+        ).pack(side="left", padx=8)
+
+        tk.Button(
+            button_row,
+            text="Export CSV",
+            fg="white",
+            bg="#38476e",
+            font=("Verdana", 10, "bold"),
+            padx=20,
+            pady=10,
+            command=lambda: self.export_results_csv(data)
+        ).pack(side="left", padx=8)
+
+        tk.Label(footer_frame, bg="#B9B0EB").pack(expand=True)
+
+
 
 
 if __name__ == "__main__":
