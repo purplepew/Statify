@@ -425,11 +425,16 @@ class Inferential(tk.Toplevel):
         # General enable: any data present and significance provided
         should_enable_general = has_group_values and has_significance
 
+        # ANOVA requires at least three populated groups
+        should_enable_anova = groups_with_values >= 3 and has_significance
+
         # Correlation requires at least two groups with values
         should_enable_correlation = groups_with_values >= 2 and has_significance
 
         for button in self.extract_buttons:
-            if button is self.correlation_button:
+            if button is self.anova_button:
+                button.config(state="normal" if should_enable_anova else "disabled")
+            elif button is self.correlation_button:
                 button.config(state="normal" if should_enable_correlation else "disabled")
             else:
                 button.config(state="normal" if should_enable_general else "disabled")
