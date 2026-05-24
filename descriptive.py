@@ -258,7 +258,8 @@ class Descriptive(tk.Toplevel):
         for col in range(self.total_cols):
             values = []
             for row in range(self.total_rows):
-                values.append(self.entries[row][col].get())
+                value = self.entries[row][col].get().strip()
+                values.append(value if value != "" else "0")
             all_data.append({"group": col + 1, "values": values})
         return all_data
 
