@@ -152,6 +152,29 @@ class Descriptive(tk.Toplevel):
 
         self.protocol("WM_DELETE_WINDOW", self.destroy)
 
+    def _is_valid_number(self, value):
+        if value == "":
+            return True
+
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
+    def _create_numeric_entry(self, parent):
+        validate_command = self.register(self._is_valid_number)
+        return tk.Entry(
+            parent,
+            width=18,
+            relief="flat",
+            highlightbackground="gray80",
+            highlightthickness=1,
+            justify="center",
+            validate="key",
+            validatecommand=(validate_command, "%P")
+        )
+
     # ---------------- GRID BUILD ----------------
     def build_grid(self):
         for widget in self.grid_frame.winfo_children():
@@ -175,14 +198,7 @@ class Descriptive(tk.Toplevel):
         for row in range(1, self.total_rows + 1):
             row_entries = []
             for col in range(self.total_cols):
-                entry = tk.Entry(
-                    self.grid_frame,
-                    width=18,
-                    relief="flat",
-                    highlightbackground="gray80",
-                    highlightthickness=1,
-                    justify="center"
-                )
+                entry = self._create_numeric_entry(self.grid_frame)
                 entry.grid(row=row, column=col, padx=1, pady=1, sticky="nsew")
                 entry.bind("<KeyRelease>", self._on_input_change, add="+")
                 row_entries.append(entry)
@@ -193,14 +209,7 @@ class Descriptive(tk.Toplevel):
         row_entries = []
         row_num = self.total_rows + 1
         for col in range(self.total_cols):
-            entry = tk.Entry(
-                self.grid_frame,
-                width=18,
-                relief="flat",
-                highlightbackground="gray80",
-                highlightthickness=1,
-                justify="center"
-            )
+            entry = self._create_numeric_entry(self.grid_frame)
             entry.grid(row=row_num, column=col, padx=1, pady=1, sticky="nsew")
             entry.bind("<KeyRelease>", self._on_input_change, add="+")
             row_entries.append(entry)
@@ -222,14 +231,7 @@ class Descriptive(tk.Toplevel):
         ).grid(row=0, column=new_col, padx=1, pady=1, sticky="nsew")
 
         for row in range(self.total_rows):
-            entry = tk.Entry(
-                self.grid_frame,
-                width=18,
-                relief="flat",
-                highlightbackground="gray80",
-                highlightthickness=1,
-                justify="center"
-            )
+            entry = self._create_numeric_entry(self.grid_frame)
             entry.grid(row=row + 1, column=new_col, padx=1, pady=1, sticky="nsew")
             entry.bind("<KeyRelease>", self._on_input_change, add="+")
             self.entries[row].append(entry)
