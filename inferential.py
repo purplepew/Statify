@@ -1,5 +1,7 @@
 import tkinter as tk
+from tkinter import filedialog
 from tkinter import ttk
+import csv
 import statistics
 import stat_basic
 import visualization
@@ -861,6 +863,33 @@ class Inferential(tk.Toplevel):
         except ImportError:
             return None
 
+    def export_results_csv(self, data, default_filename="inferential_results.csv"):
+        file_path = filedialog.asksaveasfilename(
+            parent=self,
+            title="Save Statistical Results",
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+            initialfile=default_filename
+        )
+
+        if not file_path:
+            return
+
+        with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
+            writer = csv.writer(csv_file)
+
+            if isinstance(data, dict):
+                writer.writerow(["Field", "Value"])
+                for key, value in data.items():
+                    writer.writerow([key, value])
+            elif isinstance(data, (list, tuple)):
+                writer.writerow(["Index", "Value"])
+                for index, value in enumerate(data, start=1):
+                    writer.writerow([index, value])
+            else:
+                writer.writerow(["Value"])
+                writer.writerow([data])
+
     # =========================================================
     # RESULT WINDOW
     # =========================================================
@@ -882,9 +911,39 @@ class Inferential(tk.Toplevel):
 
         results = self.anova_results
 
-        result_frame = tk.Frame(win, bg="#B9B0EB")
+        container = tk.Frame(win, bg="#B9B0EB")
+        container.pack(fill="both", expand=True)
 
-        result_frame.pack(expand=True)
+        canvas = tk.Canvas(container, bg="#B9B0EB", highlightthickness=0)
+        v_scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        scroll_frame = tk.Frame(canvas, bg="#B9B0EB")
+
+        scroll_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas_window = canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
+        canvas.configure(yscrollcommand=v_scrollbar.set)
+
+        def on_mousewheel(event):
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        canvas.bind_all("<MouseWheel>", on_mousewheel)
+        canvas.bind(
+            "<Configure>",
+            lambda e: canvas.itemconfigure(canvas_window, width=e.width)
+        )
+
+        def close_window():
+            canvas.unbind_all("<MouseWheel>")
+            win.destroy()
+
+        canvas.pack(side="left", fill="both", expand=True)
+        v_scrollbar.pack(side="right", fill="y")
+
+        result_frame = tk.Frame(scroll_frame, bg="#B9B0EB")
+        result_frame.pack(fill="x", expand=False)
 
         tk.Label(
             result_frame,
@@ -920,8 +979,8 @@ class Inferential(tk.Toplevel):
             font=("Georgia", 16, "bold")
         ).pack(pady=10)
 
-        result_frame2 = tk.Frame(win, bg="#B9B0EB")
-        result_frame2.pack(fill="x", expand=True)
+        result_frame2 = tk.Frame(scroll_frame, bg="#B9B0EB")
+        result_frame2.pack(fill="both", expand=True)
 
         tk.Label(
             result_frame2,
@@ -954,7 +1013,7 @@ class Inferential(tk.Toplevel):
             tk.Label(comparison_frame_inner, text="No pairwise comparisons available.", bg="#B9B0EB").pack(anchor="w", pady=4)
         
         # ---------------- FOOTER ----------------
-        footer_frame = tk.Frame(win, bg="#B9B0EB")
+        footer_frame = tk.Frame(scroll_frame, bg="#B9B0EB")
         footer_frame.pack(fill="x")
 
         button_row = tk.Frame(footer_frame, bg="#B9B0EB")
@@ -968,7 +1027,7 @@ class Inferential(tk.Toplevel):
             font=("Verdana", 10, "bold"),
             padx=20,
             pady=10,
-            command=win.destroy
+            command=close_window
         ).pack(side="left", padx=8)
 
         tk.Button(
@@ -983,6 +1042,8 @@ class Inferential(tk.Toplevel):
         ).pack(side="left", padx=8)
 
         tk.Label(footer_frame, bg="#B9B0EB").pack(expand=True)
+
+        win.protocol("WM_DELETE_WINDOW", close_window)
 
     def open_extracted_correlation_data_page(self):
         win = tk.Toplevel(self)
@@ -1005,12 +1066,28 @@ class Inferential(tk.Toplevel):
 
         result_frame.pack(fill="x", expand=False, pady=5)
 
+        table_container = tk.Frame(result_frame, bg="#B9B0EB")
+        table_container.pack(fill="both", expand=True)
+
+        table_canvas = tk.Canvas(table_container, bg="#B9B0EB", highlightthickness=0)
+        table_scrollbar = tk.Scrollbar(table_container, orient="horizontal", command=table_canvas.xview)
+        table_frame = tk.Frame(table_canvas, bg="#B9B0EB")
+
+        table_frame.bind(
+            "<Configure>",
+            lambda e: table_canvas.configure(scrollregion=table_canvas.bbox("all"))
+        )
+
+        table_canvas.create_window((0, 0), window=table_frame, anchor="nw")
+        table_canvas.configure(xscrollcommand=table_scrollbar.set)
+
+        table_canvas.pack(side="top", fill="both", expand=True)
+        table_scrollbar.pack(side="bottom", fill="x")
+
         # Table of values including summations and correlation coefficient
-        table_frame = tk.Frame(result_frame, bg="#B9B0EB")
-        table_frame.pack(pady=(0, 10))
         headers = ["X", "Y", "X²", "Y²", "XY"]
         for col, header in enumerate(headers):
-            tk.Label(table_frame, text=header, bg="#38476e", fg="white", font=("Verdana", 10, "bold"), width=12).grid(row=0, column=col, padx=1, pady=1)        
+            tk.Label(table_frame, text=header, bg="#38476e", fg="white", font=("Verdana", 10, "bold"), width=12).grid(row=0, column=col, padx=1, pady=1)
         for i in range(len(results['x_values'])):
             tk.Label(table_frame, text=f"{results['x_values'][i]:.2f}", bg="white", font=("Georgia", 12), width=12).grid(row=i+1, column=0, padx=1, pady=1)
             tk.Label(table_frame, text=f"{results['y_values'][i]:.2f}", bg="white", font=("Georgia", 12), width=12).grid(row=i+1, column=1, padx=1, pady=1)
