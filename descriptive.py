@@ -7,6 +7,7 @@ from collections import Counter
 import visualization
 from config import DEFAULT_GROUPS
 import stat_basic
+import numpy as np
 
 import pyglet
 import os
@@ -349,6 +350,15 @@ class Descriptive(tk.Toplevel):
             tk.Label(group_frame, text=f"Variance: {stats['variance']}", bg="white").pack(anchor="w", padx=20)
             tk.Label(group_frame, text=f"Std Dev: {stats['std_dev']}", bg="white").pack(anchor="w", padx=20)
 
+            # PERCENTILES / QUARTILES
+            tk.Label(group_frame, text="Percentiles / Quartiles", bg="white", font=("Georgia", 12, "bold")).pack(anchor="w", padx=20, pady=(8,0))
+            pct = stats.get("percentiles")
+            if pct:
+                tk.Label(group_frame, text=f"Q1 (25th): {pct['25']}", bg="white").pack(anchor="w", padx=20)
+                tk.Label(group_frame, text=f"Median (50th): {pct['50']}", bg="white").pack(anchor="w", padx=20)
+                tk.Label(group_frame, text=f"Q3 (75th): {pct['75']}", bg="white").pack(anchor="w", padx=20)
+                tk.Label(group_frame, text=f"IQR: {pct['75'] - pct['25']}", bg="white").pack(anchor="w", padx=20)
+
             # FREQUENCY TABLE
             tk.Label(
                 group_frame,
@@ -394,6 +404,17 @@ class Descriptive(tk.Toplevel):
             padx=20,
             pady=10,
             command=lambda: visualization.VisualizationWindow(self)
+        ).pack(side="left", padx=8)
+
+        tk.Button(
+            button_row,
+            text="Show Percentiles",
+            fg="white",
+            bg="#556b87",
+            font=("Verdana", 10, "bold"),
+            padx=16,
+            pady=10,
+            command=lambda: self.show_percentiles(data)
         ).pack(side="left", padx=8)
 
         tk.Button(
@@ -517,7 +538,40 @@ class Descriptive(tk.Toplevel):
         # --- Frequency Table ---
         result["frequency"] = dict(freq)
 
+        # --- Percentiles / Quartiles ---
+        try:
+            # use NumPy for robust percentile computation
+            arr = np.array(nums, dtype=float)
+            p25, p50, p75 = np.percentile(arr, [25, 50, 75])
+            result["percentiles"] = {"25": float(round(p25, 6)), "50": float(round(p50, 6)), "75": float(round(p75, 6))}
+        except Exception:
+            result["percentiles"] = None
+
         return result
+
+    def show_percentiles(self, data):
+        win = tk.Toplevel(self)
+        win.title("Percentiles / Quartiles")
+        win.geometry("500x300")
+        win.configure(bg="white")
+
+        header = tk.Label(win, text="Percentiles (Q1, Median, Q3) per Group", font=("Georgia", 14, "bold"), bg="#38476e", fg="white")
+        header.pack(fill="x")
+
+        body = tk.Frame(win, bg="white")
+        body.pack(fill="both", expand=True, padx=10, pady=10)
+
+        for group in data:
+            stats = self.analyze_group(group["values"])
+            if stats is None or stats.get("percentiles") is None:
+                text = f"Group {group['group']}: No numeric data"
+            else:
+                p = stats["percentiles"]
+                iqr = p['75'] - p['25']
+                text = f"Group {group['group']}: Q1={p['25']}, Median={p['50']}, Q3={p['75']}  (IQR={iqr})"
+            tk.Label(body, text=text, bg="white", anchor="w").pack(fill="x", pady=2)
+
+        tk.Button(win, text="CLOSE", command=win.destroy, bg="#38476e", fg="white", font=("Verdana", 10, "bold")).pack(pady=8)
 
 
 if __name__ == "__main__":
