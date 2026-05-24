@@ -170,13 +170,7 @@ class Inferential(tk.Toplevel):
             font=("Georgia", 12)
         ).pack(side="left", padx=10)
 
-        self.significance = tk.Entry(
-            control_frame,
-            width=10,
-            relief="flat",
-            highlightbackground="gray80",
-            highlightthickness=1
-        )
+        self.significance = self._create_numeric_entry(control_frame, width=10)
 
         self.significance.pack(side="left", padx=5)
         self.significance.bind("<KeyRelease>", self._on_input_change, add="+")
@@ -256,6 +250,29 @@ class Inferential(tk.Toplevel):
 
         self.protocol("WM_DELETE_WINDOW", on_close)
 
+    def _is_valid_number(self, value):
+        if value == "":
+            return True
+
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
+    def _create_numeric_entry(self, parent, width=18):
+        validate_command = self.register(self._is_valid_number)
+        return tk.Entry(
+            parent,
+            width=width,
+            relief="flat",
+            highlightbackground="gray80",
+            highlightthickness=1,
+            justify="center",
+            validate="key",
+            validatecommand=(validate_command, "%P")
+        )
+
     # =========================================================
     # GRID
     # =========================================================
@@ -293,14 +310,7 @@ class Inferential(tk.Toplevel):
 
             for col in range(self.total_cols):
 
-                entry = tk.Entry(
-                    self.grid_frame,
-                    width=18,
-                    relief="flat",
-                    highlightbackground="gray80",
-                    highlightthickness=1,
-                    justify="center"
-                )
+                entry = self._create_numeric_entry(self.grid_frame)
 
                 entry.grid(
                     row=row,
@@ -328,14 +338,7 @@ class Inferential(tk.Toplevel):
 
         for col in range(self.total_cols):
 
-            entry = tk.Entry(
-                self.grid_frame,
-                width=18,
-                relief="flat",
-                highlightbackground="gray80",
-                highlightthickness=1,
-                justify="center"
-            )
+            entry = self._create_numeric_entry(self.grid_frame)
 
             entry.grid(
                 row=row_num,
@@ -380,14 +383,7 @@ class Inferential(tk.Toplevel):
 
         for row in range(self.total_rows):
 
-            entry = tk.Entry(
-                self.grid_frame,
-                width=18,
-                relief="flat",
-                highlightbackground="gray80",
-                highlightthickness=1,
-                justify="center"
-            )
+            entry = self._create_numeric_entry(self.grid_frame)
 
             entry.grid(
                 row=row + 1,
