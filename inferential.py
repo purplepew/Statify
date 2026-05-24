@@ -404,16 +404,33 @@ class Inferential(tk.Toplevel):
         self.update_extract_button_state()
 
     def update_extract_button_state(self):
+        # Check if any entry across the grid contains a value
         has_group_values = any(
             entry.get().strip()
             for row_entries in self.entries
             for entry in row_entries
         )
+
+        # Count how many groups (columns) have at least one non-empty value
+        groups_with_values = 0
+        for col in range(self.total_cols):
+            col_has_value = any(self.entries[row][col].get().strip() for row in range(self.total_rows))
+            if col_has_value:
+                groups_with_values += 1
+
         has_significance = bool(self.significance.get().strip())
-        should_enable = has_group_values and has_significance
+
+        # General enable: any data present and significance provided
+        should_enable_general = has_group_values and has_significance
+
+        # Correlation requires at least two groups with values
+        should_enable_correlation = groups_with_values >= 2 and has_significance
 
         for button in self.extract_buttons:
-            button.config(state="normal" if should_enable else "disabled")
+            if button is self.correlation_button:
+                button.config(state="normal" if should_enable_correlation else "disabled")
+            else:
+                button.config(state="normal" if should_enable_general else "disabled")
 
     # =========================================================
     # GET DATA
