@@ -504,7 +504,12 @@ class Inferential(tk.Toplevel):
         MS_between = ss_between / df_between if df_between > 0 else 0
         MS_within = ss_within / df_within if df_within > 0 else 0
 
-        F_value = MS_between / MS_within if MS_within > 0 else 0
+        if MS_within > 0:
+            F_value = MS_between / MS_within
+        elif MS_between > 0:
+            F_value = float("inf")
+        else:
+            F_value = 0
 
         # Get alpha or Level of Significance taken from User Input, default to 0.05 if invalid
         alpha = 0.05
