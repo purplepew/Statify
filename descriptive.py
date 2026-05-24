@@ -4,6 +4,7 @@ import csv
 from tkinter import ttk
 import statistics
 from collections import Counter
+import numpy as np
 import visualization
 from config import DEFAULT_GROUPS
 import stat_basic
@@ -326,32 +327,69 @@ class Descriptive(tk.Toplevel):
             group_frame.pack(side="left", padx=5, pady=5)
             group_frame.pack_propagate(False)
 
+            card_canvas = tk.Canvas(group_frame, bg="white", highlightthickness=0)
+            card_scrollbar = tk.Scrollbar(group_frame, orient="vertical", command=card_canvas.yview)
+            card_scrollable_frame = tk.Frame(card_canvas, bg="white")
+            card_window = card_canvas.create_window((0, 0), window=card_scrollable_frame, anchor="nw")
+
+            card_scrollable_frame.bind(
+                "<Configure>",
+                lambda e, canvas=card_canvas: canvas.configure(scrollregion=canvas.bbox("all"))
+            )
+
+            card_canvas.bind(
+                "<Configure>",
+                lambda e, canvas=card_canvas, window=card_window: canvas.itemconfigure(window, width=e.width)
+            )
+            card_canvas.configure(yscrollcommand=card_scrollbar.set)
+
+            def _bind_card_mousewheel(event, canvas=card_canvas):
+                canvas.bind_all("<MouseWheel>", lambda wheel_event, target=canvas: target.yview_scroll(int(-1 * (wheel_event.delta / 120)), "units"))
+
+            def _unbind_card_mousewheel(event, canvas=card_canvas):
+                canvas.unbind_all("<MouseWheel>")
+
+            card_canvas.bind("<Enter>", _bind_card_mousewheel)
+            card_canvas.bind("<Leave>", _unbind_card_mousewheel)
+
+            card_canvas.pack(side="left", fill="both", expand=True)
+            card_scrollbar.pack(side="right", fill="y")
+
             tk.Label(
-                group_frame,
+                card_scrollable_frame,
                 text=f"Group {group['group']}",
                 font=("Georgia", 14, "bold"),
                 bg="white", pady=10
             ).pack(anchor="center")
 
             if stats is None:
-                tk.Label(group_frame, text="No valid numeric data", bg="white").pack()
+                tk.Label(card_scrollable_frame, text="No valid numeric data", bg="white").pack()
                 continue
 
             # CENTRAL TENDENCY
-            tk.Label(group_frame, text="Measure of Central Tendency", bg="white", font=("Georgia", 12, "bold")).pack(anchor="w", padx=20)
-            tk.Label(group_frame, text=f"Mean: {stats['mean']}", bg="white").pack(anchor="w", padx=20)
-            tk.Label(group_frame, text=f"Median: {stats['median']}", bg="white").pack(anchor="w", padx=20)
-            tk.Label(group_frame, text=f"Mode: {stats['mode']}", bg="white").pack(anchor="w", padx=20)
+            tk.Label(card_scrollable_frame, text="Measure of Central Tendency", bg="white", font=("Georgia", 12, "bold")).pack(anchor="w", padx=20)
+            tk.Label(card_scrollable_frame, text=f"Mean: {stats['mean']}", bg="white").pack(anchor="w", padx=20)
+            tk.Label(card_scrollable_frame, text=f"Median: {stats['median']}", bg="white").pack(anchor="w", padx=20)
+            tk.Label(card_scrollable_frame, text=f"Mode: {stats['mode']}", bg="white").pack(anchor="w", padx=20)
 
             # DISPERSION
-            tk.Label(group_frame, text="Measure of Dispersion", bg="white", font=("Georgia", 12, "bold")).pack(anchor="w", padx=20)
-            tk.Label(group_frame, text=f"Range: {stats['range']}", bg="white").pack(anchor="w", padx=20)
-            tk.Label(group_frame, text=f"Variance: {stats['variance']}", bg="white").pack(anchor="w", padx=20)
-            tk.Label(group_frame, text=f"Std Dev: {stats['std_dev']}", bg="white").pack(anchor="w", padx=20)
+            tk.Label(card_scrollable_frame, text="Measure of Dispersion", bg="white", font=("Georgia", 12, "bold")).pack(anchor="w", padx=20)
+            tk.Label(card_scrollable_frame, text=f"Range: {stats['range']}", bg="white").pack(anchor="w", padx=20)
+            tk.Label(card_scrollable_frame, text=f"Variance: {stats['variance']}", bg="white").pack(anchor="w", padx=20)
+            tk.Label(card_scrollable_frame, text=f"Std Dev: {stats['std_dev']}", bg="white").pack(anchor="w", padx=20)
+
+            # PERCENTILES / QUARTILES
+            tk.Label(card_scrollable_frame, text="Percentiles / Quartiles", bg="white", font=("Georgia", 12, "bold")).pack(anchor="w", padx=20, pady=(8, 0))
+            tk.Label(card_scrollable_frame, text=f"Min: {stats['min']}", bg="white").pack(anchor="w", padx=20)
+            tk.Label(card_scrollable_frame, text=f"Q1 / 25th Percentile: {stats['q1']}", bg="white").pack(anchor="w", padx=20)
+            tk.Label(card_scrollable_frame, text=f"Q2 / 50th Percentile: {stats['q2']}", bg="white").pack(anchor="w", padx=20)
+            tk.Label(card_scrollable_frame, text=f"Q3 / 75th Percentile: {stats['q3']}", bg="white").pack(anchor="w", padx=20)
+            tk.Label(card_scrollable_frame, text=f"IQR: {stats['iqr']}", bg="white").pack(anchor="w", padx=20)
+            tk.Label(card_scrollable_frame, text=f"Max: {stats['max']}", bg="white").pack(anchor="w", padx=20)
 
             # FREQUENCY TABLE
             tk.Label(
-                group_frame,
+                card_scrollable_frame,
                 text="Frequency Table:",
                 bg="white",
                 font=("Georgia", 12, "bold")
@@ -363,7 +401,7 @@ class Descriptive(tk.Toplevel):
 
             if highest_count == 1:
                 tk.Label(
-                    group_frame,
+                    card_scrollable_frame,
                     text="Frequency: Not Applicable",
                     bg="white"
                 ).pack(anchor="w", padx=40)
@@ -373,7 +411,7 @@ class Descriptive(tk.Toplevel):
                     if count == highest_count:
                         highest_values.append(value)
                 tk.Label(
-                    group_frame,
+                    card_scrollable_frame,
                     text=f"Highest Frequency: {highest_values} → {highest_count}",
                     bg="white"
                 ).pack(anchor="w", padx=40)
@@ -440,6 +478,12 @@ class Descriptive(tk.Toplevel):
             "Range",
             "Variance",
             "Std Dev",
+            "Min",
+            "Q1",
+            "Q2",
+            "Q3",
+            "IQR",
+            "Max",
             "Highest Frequency",
             "Frequency Values"
         ]
@@ -460,6 +504,12 @@ class Descriptive(tk.Toplevel):
                         "Range": "",
                         "Variance": "",
                         "Std Dev": "",
+                        "Min": "",
+                        "Q1": "",
+                        "Q2": "",
+                        "Q3": "",
+                        "IQR": "",
+                        "Max": "",
                         "Highest Frequency": "",
                         "Frequency Values": ""
                     })
@@ -477,6 +527,12 @@ class Descriptive(tk.Toplevel):
                     "Range": stats["range"],
                     "Variance": stats["variance"],
                     "Std Dev": stats["std_dev"],
+                    "Min": stats["min"],
+                    "Q1": stats["q1"],
+                    "Q2": stats["q2"],
+                    "Q3": stats["q3"],
+                    "IQR": stats["iqr"],
+                    "Max": stats["max"],
                     "Highest Frequency": highest_count,
                     "Frequency Values": highest_values
                 })
@@ -513,6 +569,14 @@ class Descriptive(tk.Toplevel):
         else:
             result["variance"] = 0
             result["std_dev"] = 0
+
+        # --- Percentiles / Quartiles ---
+        result["min"] = min(nums)
+        result["q1"] = float(np.percentile(nums, 25))
+        result["q2"] = float(np.percentile(nums, 50))
+        result["q3"] = float(np.percentile(nums, 75))
+        result["iqr"] = result["q3"] - result["q1"]
+        result["max"] = max(nums)
 
         # --- Frequency Table ---
         result["frequency"] = dict(freq)

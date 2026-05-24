@@ -328,6 +328,68 @@ def distribution_summary_figure(*groups):
     fig.tight_layout()
     return fig
 
+
+def percentile_quartile_figure(*groups):
+    plt.close('all')
+    prepared = _prepare_groups(*groups)
+    if not prepared:
+        messagebox.showwarning("Percentiles / Quartiles", "No valid numeric data found.")
+        return None
+
+    fig = Figure(figsize=(9, 6), dpi=100)
+    ax = fig.add_subplot(111)
+
+    positions = np.arange(1, len(prepared) + 1)
+    boxprops = dict(facecolor="#B9B0EB", alpha=0.7, edgecolor="#38476e")
+    medianprops = dict(color="#38476e", linewidth=2)
+    whiskerprops = dict(color="#38476e", linewidth=1.5)
+    capprops = dict(color="#38476e", linewidth=1.5)
+
+    ax.boxplot(
+        prepared,
+        vert=False,
+        positions=positions,
+        widths=0.5,
+        patch_artist=True,
+        showmeans=False,
+        boxprops=boxprops,
+        medianprops=medianprops,
+        whiskerprops=whiskerprops,
+        capprops=capprops,
+        flierprops=dict(marker='o', markerfacecolor='white', markeredgecolor='#38476e', markersize=4)
+    )
+
+    for index, values in enumerate(prepared, start=1):
+        series = pd.Series(values)
+        minimum = float(series.min())
+        q1 = float(series.quantile(0.25))
+        q2 = float(series.quantile(0.50))
+        q3 = float(series.quantile(0.75))
+        maximum = float(series.max())
+
+        label_y = index + 0.25
+        label_style = dict(boxstyle="round,pad=0.25", facecolor="white", alpha=0.92)
+
+        ax.text(minimum, label_y, f"Min: {minimum:.2f}", ha="center", va="bottom", fontsize=7, bbox={**label_style, 'edgecolor': '#38476e'})
+        ax.text(q1, label_y, f"Q1: {q1:.2f}", ha="center", va="bottom", fontsize=7, bbox={**label_style, 'edgecolor': '#38476e'})
+        ax.text(q2, label_y, f"Q2: {q2:.2f}", ha="center", va="bottom", fontsize=7, bbox={**label_style, 'edgecolor': '#38476e'})
+        ax.text(q3, label_y, f"Q3: {q3:.2f}", ha="center", va="bottom", fontsize=7, bbox={**label_style, 'edgecolor': '#38476e'})
+        ax.text(maximum, label_y, f"Max: {maximum:.2f}", ha="center", va="bottom", fontsize=7, bbox={**label_style, 'edgecolor': '#38476e'})
+
+    all_values = [value for group in prepared for value in group]
+    x_min, x_max = min(all_values), max(all_values)
+    padding = (x_max - x_min) * 0.08 if x_max != x_min else 1
+
+    ax.set_yticks(positions)
+    ax.set_yticklabels([f"Group {index}" for index in positions])
+    ax.set_xlim(x_min - padding, x_max + padding)
+    ax.set_title('Percentile / Quartile Summary')
+    ax.set_xlabel('Value')
+    ax.grid(axis='x', alpha=0.25, linestyle='--')
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    fig.tight_layout()
+    return fig
+
 class VisualizationWindow(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
@@ -395,9 +457,9 @@ class VisualizationWindow(tk.Toplevel):
             text="Central Tendency",
             fg="#38476e",
             bg="white",
-            font=("Verdana", 10, "bold"),
-            padx=12,
-            pady=8,
+            font=("Verdana", 9, "bold"),
+            padx=10,
+            pady=7,
             command=self.show_central_tendency
         ).pack(side="left", padx=5)
 
@@ -406,9 +468,9 @@ class VisualizationWindow(tk.Toplevel):
             text="Variability Overview",
             fg="#38476e",
             bg="white",
-            font=("Verdana", 10, "bold"),
-            padx=12,
-            pady=8,
+            font=("Verdana", 9, "bold"),
+            padx=10,
+            pady=7,
             command=self.show_variability_overview
         ).pack(side="left", padx=5)
 
@@ -417,9 +479,9 @@ class VisualizationWindow(tk.Toplevel):
             text="Frequency Breakdown",
             fg="#38476e",
             bg="white",
-            font=("Verdana", 10, "bold"),
-            padx=12,
-            pady=8,
+            font=("Verdana", 9, "bold"),
+            padx=10,
+            pady=7,
             command=self.show_frequency_breakdown
         ).pack(side="left", padx=5)
 
@@ -428,10 +490,21 @@ class VisualizationWindow(tk.Toplevel):
             text="Distribution Summary",
             fg="#38476e",
             bg="white",
-            font=("Verdana", 10, "bold"),
-            padx=12,
-            pady=8,
+            font=("Verdana", 9, "bold"),
+            padx=10,
+            pady=7,
             command=self.show_distribution_summary
+        ).pack(side="left", padx=5)
+
+        tk.Button(
+            self.subcategory_frame,
+            text="Percentile / Quartile",
+            fg="#38476e",
+            bg="white",
+            font=("Verdana", 9, "bold"),
+            padx=10,
+            pady=7,
+            command=self.show_percentile_quartile
         ).pack(side="left", padx=5)
 
         tk.Label(self.footer_frame, bg="#B9B0EB").pack(expand=True)
@@ -470,6 +543,11 @@ class VisualizationWindow(tk.Toplevel):
     def show_distribution_summary(self):
         groups = [group["values"] for group in self.source_window.get_all_data()]
         fig = distribution_summary_figure(*groups)
+        self.display_figure(fig)
+
+    def show_percentile_quartile(self):
+        groups = [group["values"] for group in self.source_window.get_all_data()]
+        fig = percentile_quartile_figure(*groups)
         self.display_figure(fig)
 
     def display_figure(self, figure):
