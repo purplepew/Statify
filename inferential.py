@@ -431,11 +431,16 @@ class Inferential(tk.Toplevel):
         # Correlation requires at least two groups with values
         should_enable_correlation = groups_with_values >= 2 and has_significance
 
+        # Chi-square also requires at least two populated groups
+        should_enable_chisquare = groups_with_values >= 2 and has_significance
+
         for button in self.extract_buttons:
             if button is self.anova_button:
                 button.config(state="normal" if should_enable_anova else "disabled")
             elif button is self.correlation_button:
                 button.config(state="normal" if should_enable_correlation else "disabled")
+            elif button is self.chisquare_button:
+                button.config(state="normal" if should_enable_chisquare else "disabled")
             else:
                 button.config(state="normal" if should_enable_general else "disabled")
 
