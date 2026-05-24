@@ -248,7 +248,7 @@ class Inferential(tk.Toplevel):
         self.parent = parent
 
         def on_close():
-            root.destroy()
+            self.destroy()
 
         self.protocol("WM_DELETE_WINDOW", on_close)
 
